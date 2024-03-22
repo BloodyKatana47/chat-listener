@@ -162,8 +162,8 @@ cython_debug/
 chats.txt
 words.txt
 
-my_account.session
-my_account.session-journal
+*.session
+*.session-journal
 
 test.py
 temp.py
