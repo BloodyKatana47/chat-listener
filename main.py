@@ -23,6 +23,10 @@ async def on_startup():
 
 Доступные команды:
 `/list` - показать список чатов.
+
+⚙️ Вы можете отправить сюда файлы:
+`chats.txt` - для обновления списка чатов для прослушивания
+`words.txt` - для обновления списка слов для прослушивания
     """)
 
 
@@ -88,25 +92,63 @@ async def list_chats(client: Client, message: Message):
 
 
 async def update_chats(client: Client, message: Message):
+    """
+    Function for updating chats list
+    :param client:
+    :param message:
+    :return:
+    """
     doc_name = message.document.file_name
     await message.download()
     new_chats = get_chats(f'downloads/{doc_name}')
 
-    words_list = get_words('downloads/words.txt') if os.path.exists(
+    update_words_list = get_words('downloads/words.txt') if os.path.exists(
         os.path.join('downloads', 'words.txt')
     ) else get_words()
     new_regex_handler = MessageHandler(
-        forwarder, filters=filters.chat(chats=new_chats) & filters.regex(r"(?i)\b(" + '|'.join(words_list) + r")\b")
+        forwarder, filters=filters.chat(
+            chats=new_chats
+        ) & filters.regex(r"(?i)\b(" + '|'.join(update_words_list) + r")\b")
     )
     app.remove_handler(handler=regex_handler)
     app.add_handler(new_regex_handler)
     await message.reply(text='Список чатов был успешно обновлён!', quote=True)
 
 
+async def update_words(client: Client, message: Message):
+    """
+    Function for updating words list
+    :param client:
+    :param message:
+    :return:
+    """
+    doc_name = message.document.file_name
+    await message.download()
+    new_words = get_words(f'downloads/{doc_name}')
+
+    update_chats_list = get_words('downloads/chats.txt') if os.path.exists(
+        os.path.join('downloads', 'chats.txt')
+    ) else get_words()
+    new_regex_handler = MessageHandler(
+        forwarder, filters=filters.chat(
+            chats=update_chats_list
+        ) & filters.regex(r"(?i)\b(" + '|'.join(new_words) + r")\b")
+    )
+    app.remove_handler(handler=regex_handler)
+    app.add_handler(new_regex_handler)
+    await message.reply(text='Список слов был успешно обновлён!', quote=True)
+
+
 app = Client(name="my_account", api_id=API_ID, api_hash=API_HASH)
 
+chats_list = get_chats('downloads/chats.txt') if os.path.exists(
+    os.path.join('downloads', 'chats.txt')
+) else get_chats()
+words_list = get_words('downloads/words.txt') if os.path.exists(
+    os.path.join('downloads', 'words.txt')
+) else get_words()
 regex_handler = MessageHandler(
-    forwarder, filters=filters.chat(chats=get_chats()) & filters.regex(r"(?i)\b(" + '|'.join(get_words()) + r")\b")
+    forwarder, filters=filters.chat(chats=chats_list) & filters.regex(r"(?i)\b(" + '|'.join(words_list) + r")\b")
 )
 
 command_list_handler = MessageHandler(
@@ -118,9 +160,15 @@ file_chats_handler = MessageHandler(
     update_chats, filters=filters.chat(chats='me') & filters.document & file_chats_filter
 )
 
+file_words_filter = filters.create(is_words_document)
+file_words_handler = MessageHandler(
+    update_words, filters=filters.chat(chats='me') & filters.document & file_words_filter
+)
+
 app.add_handler(regex_handler)
 app.add_handler(command_list_handler)
 app.add_handler(file_chats_handler)
+app.add_handler(file_words_handler)
 
 if __name__ == '__main__':
     app.run(main())

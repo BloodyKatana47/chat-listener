@@ -5,7 +5,7 @@ from pprint import pprint
 def get_chats(file_path='chats.txt'):
     try:
         with open(file_path) as file:
-            chats = file.readlines()
+            chats = [line.strip() for line in file if line.strip()]
     except FileNotFoundError:
         print('Создайте файл chats.txt и укажите в нём нужные чаты.')
         return exit()
@@ -14,7 +14,6 @@ def get_chats(file_path='chats.txt'):
 
     chats_list = []
     for chat in chats:
-        chat = chat.removesuffix('\n')
         try:
             chats_list.append(int(chat))
         except ValueError:
@@ -27,11 +26,9 @@ def get_chats(file_path='chats.txt'):
 def get_words(file_path='words.txt'):
     try:
         with open(file_path) as file:
-            words = file.readlines()
+            words_list = [line.strip() for line in file if line.strip()]
     except FileNotFoundError:
         print('Создайте файл words.txt и укажите в нём нужные слова.')
         return exit()
-
-    words_list = [word[:-1].strip() for word in words]
     pprint(words_list)
     return words_list
