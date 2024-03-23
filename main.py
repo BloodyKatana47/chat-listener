@@ -29,6 +29,7 @@ async def on_startup():
 `chats.txt` - для обновления списка чатов для прослушивания
 `words.txt` - для обновления списка слов для прослушивания
 `answers.txt` - для обновления списка заготовленных сообщений для отправки
+`skip_words.txt` - для обновления списка стоп-слов
     """)
 
 
@@ -132,9 +133,9 @@ async def update_words(client: Client, message: Message):
     await message.download()
     new_words = get_words(f'downloads/{doc_name}')
 
-    update_chats_list = get_words('downloads/chats.txt') if os.path.exists(
+    update_chats_list = get_chats('downloads/chats.txt') if os.path.exists(
         os.path.join('downloads', 'chats.txt')
-    ) else get_words()
+    ) else get_chats()
     new_regex_handler = MessageHandler(
         random_answer, filters=filters.chat(
             chats=update_chats_list
@@ -143,6 +144,30 @@ async def update_words(client: Client, message: Message):
     app.remove_handler(handler=regex_handler)
     app.add_handler(new_regex_handler)
     await message.reply(text='Список слов был успешно обновлён!', quote=True)
+
+
+# async def update_skip_words(client: Client, message: Message):
+#     """
+#     Function for updating skip_words list
+#     :param client:
+#     :param message:
+#     :return:
+#     """
+#     doc_name = message.document.file_name
+#     await message.download()
+#     new_words = get_skip_words(f'downloads/{doc_name}')
+#
+#     update_chats_list = get_words('downloads/chats.txt') if os.path.exists(
+#         os.path.join('downloads', 'chats.txt')
+#     ) else get_words()
+#     new_regex_handler = MessageHandler(
+#         random_answer, filters=filters.chat(
+#             chats=update_chats_list
+#         ) & filters.regex(r"(?i)\b(" + '|'.join(new_words) + r")\b")
+#     )
+#     app.remove_handler(handler=regex_handler)
+#     app.add_handler(new_regex_handler)
+#     await message.reply(text='Список слов был успешно обновлён!', quote=True)
 
 
 async def update_answers(client: Client, message: Message):
@@ -164,8 +189,15 @@ chats_list = get_chats('downloads/chats.txt') if os.path.exists(
 words_list = get_words('downloads/words.txt') if os.path.exists(
     os.path.join('downloads', 'words.txt')
 ) else get_words()
+# skip_words_list = get_skip_words('downloads/skip_words.txt') if os.path.exists(
+#     os.path.join('downloads', 'skip_words.txt')
+# ) else get_skip_words()
 regex_handler = MessageHandler(
-    random_answer, filters=filters.chat(chats=chats_list) & filters.regex(r"(?i)\b(" + '|'.join(words_list) + r")\b")
+    random_answer,
+    # filters=filters.chat(chats=chats_list) & ~filters.regex(
+    #     r"(?i)\b(" + '|'.join(words_list) + r")\b"
+    # ) & filters.regex(r"(?i)\b(" + '|'.join(words_list) + r")\b")
+    filters=filters.chat(chats=chats_list) & filters.regex(r"(?i)\b(" + '|'.join(words_list) + r")\b")
 )
 
 command_list_handler = MessageHandler(
