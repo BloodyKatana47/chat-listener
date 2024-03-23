@@ -21,3 +21,14 @@ async def is_words_document(_, __, m: Message):
     :return:
     """
     return m.document.file_name == 'words.txt'
+
+
+async def is_answers_document(_, __, m: Message):
+    """
+    Document name filter. Checks whether file_name equals to 'answers.txt'
+    :param _:
+    :param __:
+    :param m:
+    :return:
+    """
+    return m.document.file_name == 'answers.txt'

@@ -161,6 +161,7 @@ cython_debug/
 
 chats.txt
 words.txt
+answers.txt
 
 *.session
 *.session-journal
@@ -169,3 +170,4 @@ test.py
 temp.py
 
 list_chats.json
+temp.json

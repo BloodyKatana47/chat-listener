@@ -1,5 +1,6 @@
 import json
 import os
+import random
 
 from dotenv import load_dotenv
 from pyrogram import Client, filters, idle
@@ -27,6 +28,7 @@ async def on_startup():
 ⚙️ Вы можете отправить сюда файлы:
 `chats.txt` - для обновления списка чатов для прослушивания
 `words.txt` - для обновления списка слов для прослушивания
+`answers.txt` - для обновления списка заготовленных сообщений для отправки
     """)
 
 
@@ -41,14 +43,18 @@ async def main():
     await app.stop()
 
 
-async def forwarder(client: Client, message: Message):
+async def random_answer(client: Client, message: Message):
     """
     Forwarding all messages.
     :param client:
     :param message:
     :return:
     """
-    await message.forward('me')
+    update_answers_list = get_answers('downloads/answers.txt') if os.path.exists(
+        os.path.join('downloads', 'answers.txt')
+    ) else get_answers()
+    random_choice = random.choice(update_answers_list)
+    await app.send_message(chat_id=message.from_user.id, text=random_choice)
 
 
 async def list_chats(client: Client, message: Message):
@@ -106,7 +112,7 @@ async def update_chats(client: Client, message: Message):
         os.path.join('downloads', 'words.txt')
     ) else get_words()
     new_regex_handler = MessageHandler(
-        forwarder, filters=filters.chat(
+        random_answer, filters=filters.chat(
             chats=new_chats
         ) & filters.regex(r"(?i)\b(" + '|'.join(update_words_list) + r")\b")
     )
@@ -130,13 +136,24 @@ async def update_words(client: Client, message: Message):
         os.path.join('downloads', 'chats.txt')
     ) else get_words()
     new_regex_handler = MessageHandler(
-        forwarder, filters=filters.chat(
+        random_answer, filters=filters.chat(
             chats=update_chats_list
         ) & filters.regex(r"(?i)\b(" + '|'.join(new_words) + r")\b")
     )
     app.remove_handler(handler=regex_handler)
     app.add_handler(new_regex_handler)
     await message.reply(text='Список слов был успешно обновлён!', quote=True)
+
+
+async def update_answers(client: Client, message: Message):
+    """
+    Function for updating answers list
+    :param client:
+    :param message:
+    :return:
+    """
+    await message.download()
+    await message.reply(text='Список заготовленных ответов был успешно обновлён!', quote=True)
 
 
 app = Client(name="my_account", api_id=API_ID, api_hash=API_HASH)
@@ -148,7 +165,7 @@ words_list = get_words('downloads/words.txt') if os.path.exists(
     os.path.join('downloads', 'words.txt')
 ) else get_words()
 regex_handler = MessageHandler(
-    forwarder, filters=filters.chat(chats=chats_list) & filters.regex(r"(?i)\b(" + '|'.join(words_list) + r")\b")
+    random_answer, filters=filters.chat(chats=chats_list) & filters.regex(r"(?i)\b(" + '|'.join(words_list) + r")\b")
 )
 
 command_list_handler = MessageHandler(
@@ -165,10 +182,16 @@ file_words_handler = MessageHandler(
     update_words, filters=filters.chat(chats='me') & filters.document & file_words_filter
 )
 
+file_answers_filter = filters.create(is_answers_document)
+file_answers_handler = MessageHandler(
+    update_answers, filters=filters.chat(chats='me') & filters.document & file_answers_filter
+)
+
 app.add_handler(regex_handler)
 app.add_handler(command_list_handler)
 app.add_handler(file_chats_handler)
 app.add_handler(file_words_handler)
+app.add_handler(file_answers_handler)
 
 if __name__ == '__main__':
     app.run(main())

@@ -32,3 +32,12 @@ def get_words(file_path='words.txt'):
         return exit()
     pprint(words_list)
     return words_list
+
+
+def get_answers(file_path='answers.txt'):
+    try:
+        with open(file_path) as file:
+            answers = file.read().split('===')
+    except FileNotFoundError:
+        print('Создайте файл answers.txt и укажите в нём нужные заготовленные ответы.')
+    return answers
