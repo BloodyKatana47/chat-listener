@@ -34,6 +34,17 @@ def get_words(file_path='words.txt'):
     return words_list
 
 
+def get_skip_words(file_path='skip_words.txt'):
+    try:
+        with open(file_path) as file:
+            skip_words_list = [line.strip() for line in file if line.strip()]
+    except FileNotFoundError:
+        print('Создайте файл skip_words.txt и укажите в нём нужные слова.')
+        return exit()
+    pprint(skip_words_list)
+    return skip_words_list
+
+
 def get_answers(file_path='answers.txt'):
     try:
         with open(file_path) as file:

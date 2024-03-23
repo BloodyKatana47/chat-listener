@@ -23,6 +23,17 @@ async def is_words_document(_, __, m: Message):
     return m.document.file_name == 'words.txt'
 
 
+async def is_skip_words_document(_, __, m: Message):
+    """
+    Document name filter. Checks whether file_name equals to 'skip_words.txt'
+    :param _:
+    :param __:
+    :param m:
+    :return:
+    """
+    return m.document.file_name == 'skip_words.txt'
+
+
 async def is_answers_document(_, __, m: Message):
     """
     Document name filter. Checks whether file_name equals to 'answers.txt'
