@@ -4,7 +4,7 @@ from pprint import pprint
 
 def get_chats(file_path='chats.txt'):
     try:
-        with open(file_path) as file:
+        with open(file_path, encoding='utf-8') as file:
             chats = [line.strip() for line in file if line.strip()]
     except FileNotFoundError:
         print('Создайте файл chats.txt и укажите в нём нужные чаты.')
@@ -25,7 +25,7 @@ def get_chats(file_path='chats.txt'):
 
 def get_words(file_path='words.txt'):
     try:
-        with open(file_path) as file:
+        with open(file_path, encoding='utf-8') as file:
             words_list = [line.strip() for line in file if line.strip()]
     except FileNotFoundError:
         print('Создайте файл words.txt и укажите в нём нужные слова.')
@@ -36,7 +36,7 @@ def get_words(file_path='words.txt'):
 
 def get_skip_words(file_path='skip_words.txt'):
     try:
-        with open(file_path) as file:
+        with open(file_path, encoding='utf-8') as file:
             skip_words_list = [line.strip() for line in file if line.strip()]
     except FileNotFoundError:
         print('Создайте файл skip_words.txt и укажите в нём нужные слова.')
@@ -47,7 +47,7 @@ def get_skip_words(file_path='skip_words.txt'):
 
 def get_answers(file_path='answers.txt'):
     try:
-        with open(file_path) as file:
+        with open(file_path, encoding='utf-8') as file:
             answers = file.read().split('===')
     except FileNotFoundError:
         print('Создайте файл answers.txt и укажите в нём нужные заготовленные ответы.')
