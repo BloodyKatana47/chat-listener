@@ -1,6 +1,12 @@
 # 🤖 Chat Listener
 
 ### The user bot based on Pyrogram allows to track specific words in listed chats and send one random message to the user whose message contains one of the desired words
+### The bot can be useful for marketing purposes
+
+<div align="center">
+<img alt="Telegram" src="https://img.shields.io/badge/Telegram-blue?&style=for-the-badge&logoColor=white&logo=telegram"/>
+<img alt="Python" src="https://img.shields.io/badge/python-%2314354C.svg?&style=for-the-badge&logo=python&logoColor=white"/>
+</div>
 
 ## Setting up Telegram Account (Listener)
 ### You will need one Telegram Account
