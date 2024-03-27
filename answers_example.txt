@@ -1,10 +1,7 @@
-Первый текст
+First response text
 
 ===
-Второй текст
+Second response text
 
 ===
-Третий текст
-
-===
-Четвёртый текст
+Third response text

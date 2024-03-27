@@ -1,29 +1,38 @@
-## Для chats.txt, words.txt и skip_words.txt
-### При первом запуске юзер бота нужно создать все необходимые текстовые файлы (skip_words.txt необязателен)
-### Важно вводить новый чат/слово с новой строки!
+# 🤖 Chat Listener
 
-### Ссылки на чаты публичные без https://t.me/ или "собачки" (@):
-### Правильно
-* durov_russia
-### Неправильно
-* https://t.me/durov_russia
-* @durov_russia
-### Можно также вписывать ID чата/пользователя Telegram
+### The user bot based on Pyrogram allows to track specific words in listed chats and send one random message to the user whose message contains one of the desired words
 
-## Для answers.txt
-### Разделителем служат три знака равенства (===)
-### Первый текст вводится без них
+## Setting up Telegram Account (Listener)
+### You will need one Telegram Account
+#### Create .env file in the project directory. .env_example file can be used as an example.
+
+- `API_HASH` : Can be obtained here: https://my.telegram.org
+- `API_ID`: Can be obtained here: https://my.telegram.org
+
+## Configuring .txt files
+
+- `chats.txt` : IDs/usernames of chats that must be listened
+- `words.txt`: All trigger-words
+- `answers.txt`: Answer messages
+- `skip_words.txt`: Stop-words (trigger-words will be ignored if one appears)
+
+#### As mentioned before, you can specify chats by ID or username.
+#### In chats.txt you should not put links to public chats or usernames with https://t.me and @
+#### Do it like this:
 ```text
-Первый текст
-
-===
-Второй текст
-
-===
-Третий текст
-
-===
-Четвёртый текст
+durov_russia
+1364081847
 ```
 
-**Файлы с примерами присутствуют в главной директории**
+#### Answers must be separated with ===
+```text
+First response text
+
+===
+Second response text
+
+===
+Third response text
+```
+**Example files were added in order to help with configuring the user bot ❗**
+### Show some ❤️ and ⭐ the repo to support the project!
