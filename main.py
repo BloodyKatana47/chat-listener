@@ -8,10 +8,13 @@ from pyrogram.handlers import MessageHandler
 
 from custom_filters import *
 from files import *
+from database import Database
 
 load_dotenv()
 API_ID = os.getenv('API_ID')
 API_HASH = os.getenv('API_HASH')
+
+db = Database('users.db')
 
 
 async def on_startup():
@@ -46,16 +49,22 @@ async def main():
 
 async def random_answer(client: Client, message: Message):
     """
-    Forwarding all messages.
+    Checking whether user exists in the database.
+    In case if the one does not, it sends one random private message to the user.
     :param client:
     :param message:
     :return:
     """
-    update_answers_list = get_answers('downloads/answers.txt') if os.path.exists(
-        os.path.join('downloads', 'answers.txt')
-    ) else get_answers()
-    random_choice = random.choice(update_answers_list)
-    await app.send_message(chat_id=message.from_user.id, text=random_choice)
+    user_id = message.from_user.id
+    user_exists = db.check_user(user_id)
+    if not user_exists:
+        db.create_user(user_id)
+
+        update_answers_list = get_answers('downloads/answers.txt') if os.path.exists(
+            os.path.join('downloads', 'answers.txt')
+        ) else get_answers()
+        random_choice = random.choice(update_answers_list)
+        await app.send_message(chat_id=message.from_user.id, text=random_choice)
 
 
 async def list_chats(client: Client, message: Message):

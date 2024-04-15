@@ -172,3 +172,5 @@ temp.py
 
 list_chats.json
 temp.json
+
+*.db
