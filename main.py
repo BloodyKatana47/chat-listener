@@ -19,8 +19,7 @@ db = Database('users.db')
 
 async def on_startup():
     """
-    Sending startup message.
-    :return:
+    Sends startup message.
     """
     await app.send_message(chat_id='me', text=f"""
 🤖 Бот успешно запущен!
@@ -38,8 +37,7 @@ async def on_startup():
 
 async def main():
     """
-    Main function for starting and stopping the bot.
-    :return:
+    Starts and stops the bot.
     """
     await app.start()
     await on_startup()
@@ -49,11 +47,8 @@ async def main():
 
 async def random_answer(client: Client, message: Message):
     """
-    Checking whether user exists in the database.
+    Checks whether user exists in the database.
     In case if the one does not, it sends one random private message to the user.
-    :param client:
-    :param message:
-    :return:
     """
     user_id = message.from_user.id
     user_exists = db.check_user(user_id)
@@ -69,10 +64,7 @@ async def random_answer(client: Client, message: Message):
 
 async def list_chats(client: Client, message: Message):
     """
-    Command for sending json file with all chat IDs.
-    :param client:
-    :param message:
-    :return:
+    Sends JSON file with all chat IDs.
     """
     chats = []
     async for dialog in app.get_dialogs():
@@ -109,10 +101,7 @@ async def list_chats(client: Client, message: Message):
 
 async def update_chats(client: Client, message: Message):
     """
-    Function for updating chats list
-    :param client:
-    :param message:
-    :return:
+    Updates chats list.
     """
     doc_name = message.document.file_name
     await message.download()
@@ -133,10 +122,7 @@ async def update_chats(client: Client, message: Message):
 
 async def update_words(client: Client, message: Message):
     """
-    Function for updating words list
-    :param client:
-    :param message:
-    :return:
+    Updates words list.
     """
     doc_name = message.document.file_name
     await message.download()
@@ -157,10 +143,7 @@ async def update_words(client: Client, message: Message):
 
 async def update_skip_words(client: Client, message: Message):
     """
-    Function for updating skip_words list
-    :param client:
-    :param message:
-    :return:
+    Updates skip_words list.
     """
     await message.download()
     new_skip_words = get_skip_words('downloads/skip_words.txt')
@@ -185,10 +168,7 @@ async def update_skip_words(client: Client, message: Message):
 
 async def update_answers(client: Client, message: Message):
     """
-    Function for updating answers list
-    :param client:
-    :param message:
-    :return:
+    Updates answers list.
     """
     await message.download()
     await message.reply(text='Список заготовленных ответов был успешно обновлён!', quote=True)

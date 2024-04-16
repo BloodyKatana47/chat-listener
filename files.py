@@ -3,6 +3,9 @@ from pprint import pprint
 
 
 def get_chats(file_path='chats.txt'):
+    """
+    Opens file 'chats.txt' and returns a list of chats.
+    """
     try:
         with open(file_path, encoding='utf-8') as file:
             chats = [line.strip() for line in file if line.strip()]
@@ -24,6 +27,9 @@ def get_chats(file_path='chats.txt'):
 
 
 def get_words(file_path='words.txt'):
+    """
+    Opens 'words.txt' and returns a list of words.
+    """
     try:
         with open(file_path, encoding='utf-8') as file:
             words_list = [line.strip() for line in file if line.strip()]
@@ -35,6 +41,9 @@ def get_words(file_path='words.txt'):
 
 
 def get_skip_words(file_path='skip_words.txt'):
+    """
+    Opens 'skip_words.txt' and returns a list of skip-words.
+    """
     try:
         with open(file_path, encoding='utf-8') as file:
             skip_words_list = [line.strip() for line in file if line.strip()]
@@ -46,6 +55,9 @@ def get_skip_words(file_path='skip_words.txt'):
 
 
 def get_answers(file_path='answers.txt'):
+    """
+    Opens 'answers.txt' and returns a list of answers.
+    """
     try:
         with open(file_path, encoding='utf-8') as file:
             answers = file.read().split('===')

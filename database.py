@@ -9,8 +9,6 @@ class Database:
     def create_user(self, user_id):
         """
         Creates a new user in the database.
-        :param user_id:
-        :return:
         """
         with self.connection:
             result = self.cursor.execute('INSERT INTO users (user_id) VALUES (?)', (user_id,))
@@ -19,8 +17,6 @@ class Database:
     def check_user(self, user_id):
         """
         Checks if a user exists in the database.
-        :param user_id:
-        :return:
         """
         with self.connection:
             result = self.cursor.execute('SELECT * FROM users WHERE user_id=?', (user_id,)).fetchone()

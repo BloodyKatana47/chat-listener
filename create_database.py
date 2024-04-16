@@ -1,14 +1,22 @@
 import sqlite3
 
-database = sqlite3.connect('users.db')
-cursor = database.cursor()
 
-cursor.executescript('''
-    CREATE TABLE IF NOT EXISTS users (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        user_id INTEGER UNIQUE NOT NULL
-    )
-''')
+def create_database():
+    """
+    Creates a database with table 'users'.
+    """
+    database = sqlite3.connect('users.db')
+    cursor = database.cursor()
 
-database.commit()
-database.close()
+    cursor.executescript('''
+        CREATE TABLE IF NOT EXISTS users (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER UNIQUE NOT NULL
+        )
+    ''')
+
+    database.commit()
+    database.close()
+
+
+create_database()
