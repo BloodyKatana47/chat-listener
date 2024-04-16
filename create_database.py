@@ -1,7 +1,7 @@
 import sqlite3
 
 
-def create_database():
+def create_database() -> None:
     """
     Creates a database with table 'users'.
     """
