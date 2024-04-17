@@ -11,7 +11,12 @@ class Database:
         Creates a new user in the database.
         """
         with self.connection:
-            result = self.cursor.execute('INSERT INTO users (user_id) VALUES (?)', (user_id,))
+            result = self.cursor.execute(
+                '''
+                INSERT INTO users (user_id)
+                VALUES (?);
+                ''', (user_id,)
+            )
             return result
 
     def check_user(self, user_id: int) -> bool:
@@ -19,5 +24,11 @@ class Database:
         Checks if a user exists in the database.
         """
         with self.connection:
-            result = self.cursor.execute('SELECT * FROM users WHERE user_id=?', (user_id,)).fetchone()
+            result = self.cursor.execute(
+                '''
+                SELECT *
+                FROM users
+                WHERE user_id=?;
+                ''', (user_id,)
+            ).fetchone()
             return False if result is None else True
