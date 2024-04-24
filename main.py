@@ -2,17 +2,19 @@ import json
 import os
 import random
 
+import pyrogram.errors
 from dotenv import load_dotenv
 from pyrogram import Client, filters, idle
 from pyrogram.handlers import MessageHandler
 
 from custom_filters import *
-from files import *
 from database import Database
+from files import *
 
 load_dotenv()
 API_ID = os.getenv('API_ID')
 API_HASH = os.getenv('API_HASH')
+ADMIN_ID = os.getenv('ADMIN_ID')
 
 db = Database('users.db')
 
@@ -50,16 +52,21 @@ async def random_answer(client: Client, message: Message):
     Checks whether user exists in the database.
     In case if the one does not, it sends one random private message to the user.
     """
-    user_id = message.from_user.id
-    user_exists = db.check_user(user_id)
-    if not user_exists:
-        db.create_user(user_id)
+    if not message.from_user.is_bot:
+        user_id = message.from_user.id
+        user_exists = db.check_user(user_id)
+        if not user_exists:
+            db.create_user(user_id)
 
-        update_answers_list = get_answers('downloads/answers.txt') if os.path.exists(
-            os.path.join('downloads', 'answers.txt')
-        ) else get_answers()
-        random_choice = random.choice(update_answers_list)
-        await app.send_message(chat_id=message.from_user.id, text=random_choice)
+            update_answers_list = get_answers('downloads/answers.txt') if os.path.exists(
+                os.path.join('downloads', 'answers.txt')
+            ) else get_answers()
+            random_choice = random.choice(update_answers_list)
+            try:
+                await app.send_message(chat_id=message.from_user.id, text=random_choice)
+            except pyrogram.errors.UserBannedInChannel:
+                await app.send_message(chat_id=int(ADMIN_ID), text='**Аккаунт в спаме!**')
+                exit()
 
 
 async def list_chats(client: Client, message: Message):

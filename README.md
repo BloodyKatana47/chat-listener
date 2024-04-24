@@ -21,6 +21,7 @@
 
 - `API_HASH` : Can be obtained here: https://my.telegram.org
 - `API_ID`: Can be obtained here: https://my.telegram.org
+- `ADMIN_ID`: Admin account ID to which will be sent notification in case account gets limited from sending messages. Can be obtained here: https://t.me/getmyid_bot
 
 ## Configuring .txt files
 

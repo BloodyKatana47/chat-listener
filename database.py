@@ -15,7 +15,8 @@ class Database:
                 '''
                 INSERT INTO users (user_id)
                 VALUES (?);
-                ''', (user_id,)
+                ''',
+                (user_id,)
             )
             return result
 
@@ -29,6 +30,7 @@ class Database:
                 SELECT *
                 FROM users
                 WHERE user_id=?;
-                ''', (user_id,)
+                ''',
+                (user_id,)
             ).fetchone()
             return False if result is None else True
