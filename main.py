@@ -2,7 +2,7 @@ import json
 import os
 import random
 
-import pyrogram.errors
+from pyrogram import errors
 from dotenv import load_dotenv
 from pyrogram import Client, filters, idle
 from pyrogram.handlers import MessageHandler
@@ -64,7 +64,7 @@ async def random_answer(client: Client, message: Message):
             random_choice = random.choice(update_answers_list)
             try:
                 await app.send_message(chat_id=message.from_user.id, text=random_choice)
-            except pyrogram.errors.UserBannedInChannel:
+            except errors.UserBannedInChannel:
                 await app.send_message(chat_id=int(ADMIN_ID), text='**Аккаунт в спаме!**')
                 exit()
 
@@ -240,4 +240,8 @@ app.add_handler(file_skip_words_handler)
 app.add_handler(file_answers_handler)
 
 if __name__ == '__main__':
-    app.run(main())
+    try:
+        app.run(main())
+    except errors.PhoneNumberBanned:
+        print('---Аккаунт заблокирован---')
+        exit()
