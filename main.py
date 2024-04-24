@@ -2,9 +2,8 @@ import json
 import os
 import random
 
-from pyrogram import errors
 from dotenv import load_dotenv
-from pyrogram import Client, filters, idle
+from pyrogram import Client, filters, idle, errors
 from pyrogram.handlers import MessageHandler
 
 from custom_filters import *
@@ -243,5 +242,5 @@ if __name__ == '__main__':
     try:
         app.run(main())
     except errors.PhoneNumberBanned:
-        print('---Аккаунт заблокирован---')
+        print(f'\n---Аккаунт заблокирован---\n')
         exit()
