@@ -51,7 +51,7 @@ async def random_answer(client: Client, message: Message):
     Checks whether user exists in the database.
     In case if the one does not, it sends one random private message to the user.
     """
-    if not message.from_user.is_bot:
+    if message.from_user is not None and not message.from_user.is_bot:
         user_id = message.from_user.id
         user_exists = db.check_user(user_id)
         if not user_exists:
