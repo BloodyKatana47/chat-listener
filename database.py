@@ -18,6 +18,7 @@ class Database:
                 ''',
                 (user_id,)
             )
+            self.connection.commit()
             return result
 
     def check_user(self, user_id: int) -> bool:
