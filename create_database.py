@@ -1,11 +1,15 @@
 import sqlite3
 
+from config import settings
+
+DATABASE_NAME = settings.database_name
+
 
 def _create_database() -> None:
     """
     Creates a database with table 'users'.
     """
-    database = sqlite3.connect('users.db')
+    database = sqlite3.connect(DATABASE_NAME)
     cursor = database.cursor()
 
     cursor.executescript(

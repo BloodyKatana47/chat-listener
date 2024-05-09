@@ -2,20 +2,22 @@ import json
 import os
 import random
 
-from dotenv import load_dotenv
 from pyrogram import Client, filters, idle, errors
 from pyrogram.handlers import MessageHandler
 
+from config import settings
 from custom_filters import *
 from database import Database
 from files import *
 
-load_dotenv()
-API_ID = os.getenv('API_ID')
-API_HASH = os.getenv('API_HASH')
-ADMIN_ID = os.getenv('ADMIN_ID')
+API_ID = settings.api_id
+API_HASH = settings.api_hash
+ADMIN_ID = settings.admin_id
+DATABASE_NAME = settings.database_name
+SESSION_NAME = settings.session_name
+FOLDER_NAME = settings.folder_name
 
-db = Database('users.db')
+db = Database(DATABASE_NAME)
 
 
 async def on_startup():
@@ -57,14 +59,14 @@ async def random_answer(client: Client, message: Message):
         if not user_exists:
             db.create_user(user_id)
 
-            update_answers_list = get_answers('downloads/answers.txt') if os.path.exists(
-                os.path.join('downloads', 'answers.txt')
+            update_answers_list = get_answers(f'{FOLDER_NAME}/answers.txt') if os.path.exists(
+                os.path.join(FOLDER_NAME, 'answers.txt')
             ) else get_answers()
             random_choice = random.choice(update_answers_list)
             try:
                 await app.send_message(chat_id=message.from_user.id, text=random_choice)
             except errors.UserBannedInChannel:
-                await app.send_message(chat_id=int(ADMIN_ID), text='**Аккаунт в спаме!**')
+                await app.send_message(chat_id=ADMIN_ID, text='**Аккаунт в спаме!**')
                 exit()
 
 
@@ -111,10 +113,10 @@ async def update_chats(client: Client, message: Message):
     """
     doc_name = message.document.file_name
     await message.download()
-    new_chats = get_chats(f'downloads/{doc_name}')
+    new_chats = get_chats(f'{FOLDER_NAME}/{doc_name}')
 
-    update_words_list = get_words('downloads/words.txt') if os.path.exists(
-        os.path.join('downloads', 'words.txt')
+    update_words_list = get_words(f'{FOLDER_NAME}/words.txt') if os.path.exists(
+        os.path.join(FOLDER_NAME, 'words.txt')
     ) else get_words()
     new_regex_handler = MessageHandler(
         random_answer, filters=filters.chat(
@@ -132,10 +134,10 @@ async def update_words(client: Client, message: Message):
     """
     doc_name = message.document.file_name
     await message.download()
-    new_words = get_words(f'downloads/{doc_name}')
+    new_words = get_words(f'{FOLDER_NAME}/{doc_name}')
 
-    update_chats_list = get_chats('downloads/chats.txt') if os.path.exists(
-        os.path.join('downloads', 'chats.txt')
+    update_chats_list = get_chats(f'{FOLDER_NAME}/chats.txt') if os.path.exists(
+        os.path.join(FOLDER_NAME, 'chats.txt')
     ) else get_chats()
     new_regex_handler = MessageHandler(
         random_answer, filters=filters.chat(
@@ -152,13 +154,13 @@ async def update_skip_words(client: Client, message: Message):
     Updates skip_words list.
     """
     await message.download()
-    new_skip_words = get_skip_words('downloads/skip_words.txt')
+    new_skip_words = get_skip_words(f'{FOLDER_NAME}/skip_words.txt')
 
-    update_chats_list = get_words('downloads/chats.txt') if os.path.exists(
-        os.path.join('downloads', 'chats.txt')
+    update_chats_list = get_words(f'{FOLDER_NAME}/chats.txt') if os.path.exists(
+        os.path.join(FOLDER_NAME, 'chats.txt')
     ) else get_words()
-    update_words_list = get_words('downloads/words.txt') if os.path.exists(
-        os.path.join('downloads', 'words.txt')
+    update_words_list = get_words(f'{FOLDER_NAME}/words.txt') if os.path.exists(
+        os.path.join(FOLDER_NAME, 'words.txt')
     ) else get_words()
     new_regex_handler = MessageHandler(
         random_answer, filters=filters.chat(chats=update_chats_list) & ~filters.regex(
@@ -180,16 +182,16 @@ async def update_answers(client: Client, message: Message):
     await message.reply(text='Список заготовленных ответов был успешно обновлён!', quote=True)
 
 
-app = Client(name="my_account", api_id=API_ID, api_hash=API_HASH)
+app = Client(name=SESSION_NAME, api_id=API_ID, api_hash=API_HASH)
 
-chats_list = get_chats('downloads/chats.txt') if os.path.exists(
-    os.path.join('downloads', 'chats.txt')
+chats_list = get_chats(f'{FOLDER_NAME}/chats.txt') if os.path.exists(
+    os.path.join(FOLDER_NAME, 'chats.txt')
 ) else get_chats()
-words_list = get_words('downloads/words.txt') if os.path.exists(
-    os.path.join('downloads', 'words.txt')
+words_list = get_words(f'{FOLDER_NAME}/words.txt') if os.path.exists(
+    os.path.join(FOLDER_NAME, 'words.txt')
 ) else get_words()
-skip_words_list = get_skip_words('downloads/skip_words.txt') if os.path.exists(
-    os.path.join('downloads', 'skip_words.txt')
+skip_words_list = get_skip_words(f'{FOLDER_NAME}/skip_words.txt') if os.path.exists(
+    os.path.join(FOLDER_NAME, 'skip_words.txt')
 ) else get_skip_words()
 
 if len(skip_words_list) == 0:
