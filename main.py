@@ -1,6 +1,7 @@
 import json
 import os
 import random
+from typing import List, Union
 
 from pyrogram import Client, filters, idle, errors
 from pyrogram.handlers import MessageHandler
@@ -29,6 +30,10 @@ SESSION_NAME = settings.session_name
 FOLDER_NAME = settings.folder_name
 
 db = Database(DATABASE_NAME)
+
+
+async def _update_handlers():
+    return
 
 
 async def on_startup():
@@ -102,46 +107,46 @@ async def list_chats(client: Client, message: Message):
     await app.delete_messages(chat_id='me', message_ids=message.id)
 
 
-async def update_chats(client: Client, message: Message):
+async def update_words(client: Client, message: Message):
     """
     Updates chats list.
     """
     doc_name = message.document.file_name
     await message.download()
-    new_chats = get_chats(f'{FOLDER_NAME}/{doc_name}')
-
-    update_words_list = get_words(f'{FOLDER_NAME}/words.txt') if os.path.exists(
+    load_chats = get_chats(f'{FOLDER_NAME}/{doc_name}')
+    load_words = get_words(f'{FOLDER_NAME}/words.txt') if os.path.exists(
         os.path.join(FOLDER_NAME, 'words.txt')
     ) else get_words()
-    new_regex_handler = MessageHandler(
+
+    updated_handler = MessageHandler(
         random_answer, filters=filters.chat(
-            chats=new_chats
-        ) & filters.regex(r"(?i)\b(" + '|'.join(update_words_list) + r")\b")
+            chats=load_chats
+        ) & filters.regex(r"(?i)\b(" + '|'.join(load_words) + r")\b")
     )
     app.remove_handler(handler=regex_handler)
-    app.add_handler(new_regex_handler)
-    await message.reply(text=chats_list_updated_message, quote=True)
+    app.add_handler(updated_handler)
+    await message.reply(text=words_list_updated_message, quote=True)
 
 
-async def update_words(client: Client, message: Message):
+async def update_chats(client: Client, message: Message):
     """
     Updates words list.
     """
     doc_name = message.document.file_name
     await message.download()
-    new_words = get_words(f'{FOLDER_NAME}/{doc_name}')
-
-    update_chats_list = get_chats(f'{FOLDER_NAME}/chats.txt') if os.path.exists(
+    load_words = get_words(f'{FOLDER_NAME}/{doc_name}')
+    load_chats = get_chats(f'{FOLDER_NAME}/chats.txt') if os.path.exists(
         os.path.join(FOLDER_NAME, 'chats.txt')
     ) else get_chats()
-    new_regex_handler = MessageHandler(
+
+    updated_handler = MessageHandler(
         random_answer, filters=filters.chat(
-            chats=update_chats_list
-        ) & filters.regex(r"(?i)\b(" + '|'.join(new_words) + r")\b")
+            chats=load_chats
+        ) & filters.regex(r"(?i)\b(" + '|'.join(load_words) + r")\b")
     )
     app.remove_handler(handler=regex_handler)
-    app.add_handler(new_regex_handler)
-    await message.reply(text=words_list_updated_message, quote=True)
+    app.add_handler(updated_handler)
+    await message.reply(text=chats_list_updated_message, quote=True)
 
 
 async def update_skip_words(client: Client, message: Message):
