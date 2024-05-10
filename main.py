@@ -4,11 +4,22 @@ import random
 
 from pyrogram import Client, filters, idle, errors
 from pyrogram.handlers import MessageHandler
+from pyrogram.types import Message
 
-from config import settings
-from custom_filters import *
+from core import settings
 from database import Database
-from files import *
+from filters import is_chats_document, is_words_document, is_skip_words_document, is_answers_document
+from utils.captions import (
+    startup_message,
+    spam_message,
+    chats_document_caption,
+    chats_list_updated_message,
+    words_list_updated_message,
+    stop_words_list_updated_message,
+    answers_list_updated_message,
+    account_blocked_message,
+)
+from utils.files import get_chats, get_words, get_skip_words, get_answers
 
 API_ID = settings.api_id
 API_HASH = settings.api_hash
@@ -24,18 +35,7 @@ async def on_startup():
     """
     Sends startup message.
     """
-    await app.send_message(chat_id='me', text=f"""
-🤖 Бот успешно запущен!
-
-Доступные команды:
-`/list` - показать список чатов.
-
-⚙️ Вы можете отправить сюда файлы:
-`chats.txt` - для обновления списка чатов для прослушивания
-`words.txt` - для обновления списка слов для прослушивания
-`answers.txt` - для обновления списка заготовленных сообщений для отправки
-`skip_words.txt` - для обновления списка стоп-слов
-    """)
+    await app.send_message(chat_id='me', text=startup_message)
 
 
 async def main():
@@ -66,7 +66,7 @@ async def random_answer(client: Client, message: Message):
             try:
                 await app.send_message(chat_id=message.from_user.id, text=random_choice)
             except errors.UserBannedInChannel:
-                await app.send_message(chat_id=ADMIN_ID, text='**Аккаунт в спаме!**')
+                await app.send_message(chat_id=ADMIN_ID, text=spam_message)
                 exit()
 
 
@@ -98,12 +98,7 @@ async def list_chats(client: Client, message: Message):
     with open(file_name, 'w') as file:
         json.dump(chats, file, indent=4, ensure_ascii=False)
 
-    await app.send_document(
-        chat_id='me', document=file_name, caption=f'''
-📄 Ваш файл со всеми ID чатов, которые у вас есть.
-Выберите нужные ID и отправьте их в файле chats.txt
-        '''
-    )
+    await app.send_document(chat_id='me', document=file_name, caption=chats_document_caption)
     await app.delete_messages(chat_id='me', message_ids=message.id)
 
 
@@ -125,7 +120,7 @@ async def update_chats(client: Client, message: Message):
     )
     app.remove_handler(handler=regex_handler)
     app.add_handler(new_regex_handler)
-    await message.reply(text='Список чатов был успешно обновлён!', quote=True)
+    await message.reply(text=chats_list_updated_message, quote=True)
 
 
 async def update_words(client: Client, message: Message):
@@ -146,7 +141,7 @@ async def update_words(client: Client, message: Message):
     )
     app.remove_handler(handler=regex_handler)
     app.add_handler(new_regex_handler)
-    await message.reply(text='Список слов был успешно обновлён!', quote=True)
+    await message.reply(text=words_list_updated_message, quote=True)
 
 
 async def update_skip_words(client: Client, message: Message):
@@ -171,7 +166,7 @@ async def update_skip_words(client: Client, message: Message):
     )
     app.remove_handler(handler=regex_handler)
     app.add_handler(new_regex_handler)
-    await message.reply(text='Список стоп-слов был успешно обновлён!', quote=True)
+    await message.reply(text=stop_words_list_updated_message, quote=True)
 
 
 async def update_answers(client: Client, message: Message):
@@ -179,7 +174,7 @@ async def update_answers(client: Client, message: Message):
     Updates answers list.
     """
     await message.download()
-    await message.reply(text='Список заготовленных ответов был успешно обновлён!', quote=True)
+    await message.reply(text=answers_list_updated_message, quote=True)
 
 
 app = Client(name=SESSION_NAME, api_id=API_ID, api_hash=API_HASH)
@@ -244,5 +239,5 @@ if __name__ == '__main__':
     try:
         app.run(main())
     except errors.PhoneNumberBanned:
-        print(f'\n---Аккаунт заблокирован---\n')
+        print(account_blocked_message)
         exit()

@@ -5,6 +5,22 @@ class Database:
     def __init__(self, db_file: str):
         self.connection = sqlite3.connect(db_file)
         self.cursor = self.connection.cursor()
+        self._create_tables()
+
+    def _create_tables(self) -> None:
+        """
+        Creates tables if they do not exist.
+        """
+        with self.connection:
+            self.cursor.execute(
+                '''
+                CREATE TABLE IF NOT EXISTS users (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    user_id INTEGER UNIQUE NOT NULL
+                );
+                '''
+            )
+            self.connection.commit()
 
     def create_user(self, user_id: int) -> sqlite3.Cursor:
         """
