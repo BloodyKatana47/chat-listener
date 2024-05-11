@@ -1,7 +1,7 @@
 import json
 import os
 import random
-from typing import List, Union
+from typing import List, Union, Dict
 
 from pyrogram import Client, filters, idle, errors
 from pyrogram.handlers import MessageHandler
@@ -22,25 +22,25 @@ from utils.captions import (
 )
 from utils.files import get_chats, get_words, get_skip_words, get_answers
 
-API_ID = settings.api_id
-API_HASH = settings.api_hash
-ADMIN_ID = settings.admin_id
-DATABASE_NAME = settings.database_name
-SESSION_NAME = settings.session_name
-FOLDER_NAME = settings.folder_name
+API_ID: int = settings.api_id
+API_HASH: str = settings.api_hash
+ADMIN_ID: int = settings.admin_id
+DATABASE_NAME: str = settings.database_name
+SESSION_NAME: str = settings.session_name
+FOLDER_NAME: str = settings.folder_name
 
-db = Database(DATABASE_NAME)
-active_handler = []
+db: Database = Database(DATABASE_NAME)
+active_handler: List[MessageHandler] = []
 
 
-async def on_startup():
+async def on_startup() -> None:
     """
     Sends startup message.
     """
     await app.send_message(chat_id='me', text=startup_message)
 
 
-async def main():
+async def main() -> None:
     """
     Starts and stops the bot.
     """
@@ -50,21 +50,21 @@ async def main():
     await app.stop()
 
 
-async def random_answer(client: Client, message: Message):
+async def random_answer(client: Client, message: Message) -> Union[None, exit]:
     """
     Checks whether user exists in the database.
     In case if the one does not, it sends one random private message to the user.
     """
     if message.from_user is not None and not message.from_user.is_bot:
-        user_id = message.from_user.id
-        user_exists = db.check_user(user_id)
+        user_id: int = message.from_user.id
+        user_exists: bool = db.check_user(user_id)
         if not user_exists:
             db.create_user(user_id)
 
-            update_answers_list = get_answers(f'{FOLDER_NAME}/answers.txt') if os.path.exists(
+            update_answers_list: List[str] = get_answers(f'{FOLDER_NAME}/answers.txt') if os.path.exists(
                 os.path.join(FOLDER_NAME, 'answers.txt')
             ) else get_answers()
-            random_choice = random.choice(update_answers_list)
+            random_choice: str = random.choice(update_answers_list)
             try:
                 await app.send_message(chat_id=message.from_user.id, text=random_choice)
             except errors.UserBannedInChannel:
@@ -72,16 +72,16 @@ async def random_answer(client: Client, message: Message):
                 exit()
 
 
-async def list_chats(client: Client, message: Message):
+async def list_chats(client: Client, message: Message) -> None:
     """
     Sends JSON file with all chat IDs.
     """
-    chats = []
+    chats: List[Dict[str, int]] = []
     async for dialog in app.get_dialogs():
-        chat_id = int(dialog.chat.id)
-        chat_title = dialog.chat.title
-        chat_first_name = dialog.chat.first_name
-        chat_last_name = dialog.chat.last_name
+        chat_id: int = int(dialog.chat.id)
+        chat_title: Union[str, None] = dialog.chat.title
+        chat_first_name: str = dialog.chat.first_name
+        chat_last_name: Union[str, None] = dialog.chat.last_name
 
         if chat_title is None:
             if chat_last_name is None:
@@ -96,7 +96,7 @@ async def list_chats(client: Client, message: Message):
             chats.append({
                 chat_title: chat_id
             })
-    file_name = 'list_chats.json'
+    file_name: str = 'list_chats.json'
     with open(file_name, 'w') as file:
         json.dump(chats, file, indent=4, ensure_ascii=False)
 
@@ -104,17 +104,17 @@ async def list_chats(client: Client, message: Message):
     await app.delete_messages(chat_id='me', message_ids=message.id)
 
 
-async def update_words(client: Client, message: Message):
+async def update_words(client: Client, message: Message) -> None:
     """
     Updates words list.
     """
     await message.download()
-    load_chats = get_chats(f'{FOLDER_NAME}/chats.txt')
-    load_words = get_words(f'{FOLDER_NAME}/words.txt') if os.path.exists(
+    load_chats: List[Union[str, int]] = get_chats(f'{FOLDER_NAME}/chats.txt')
+    load_words: List[str] = get_words(f'{FOLDER_NAME}/words.txt') if os.path.exists(
         os.path.join(FOLDER_NAME, 'words.txt')
     ) else get_words()
 
-    updated_handler = MessageHandler(
+    updated_handler: MessageHandler = MessageHandler(
         random_answer, filters=filters.chat(
             chats=load_chats
         ) & filters.regex(r"(?i)\b(" + '|'.join(load_words) + r")\b")
@@ -129,17 +129,17 @@ async def update_words(client: Client, message: Message):
     await message.reply(text=words_list_updated_message, quote=True)
 
 
-async def update_chats(client: Client, message: Message):
+async def update_chats(client: Client, message: Message) -> None:
     """
     Updates chats list.
     """
     await message.download()
-    load_words = get_words(f'{FOLDER_NAME}/words.txt')
-    load_chats = get_chats(f'{FOLDER_NAME}/chats.txt') if os.path.exists(
+    load_words: List[str] = get_words(f'{FOLDER_NAME}/words.txt')
+    load_chats: List[Union[str, int]] = get_chats(f'{FOLDER_NAME}/chats.txt') if os.path.exists(
         os.path.join(FOLDER_NAME, 'chats.txt')
     ) else get_chats()
 
-    updated_handler = MessageHandler(
+    updated_handler: MessageHandler = MessageHandler(
         random_answer, filters=filters.chat(
             chats=load_chats
         ) & filters.regex(r"(?i)\b(" + '|'.join(load_words) + r")\b")
@@ -154,20 +154,20 @@ async def update_chats(client: Client, message: Message):
     await message.reply(text=chats_list_updated_message, quote=True)
 
 
-async def update_skip_words(client: Client, message: Message):
+async def update_skip_words(client: Client, message: Message) -> None:
     """
     Updates skip_words list.
     """
     await message.download()
-    load_skip_words = get_skip_words(f'{FOLDER_NAME}/skip_words.txt')
-    load_chats = get_words(f'{FOLDER_NAME}/chats.txt') if os.path.exists(
+    load_skip_words: List[str] = get_skip_words(f'{FOLDER_NAME}/skip_words.txt')
+    load_chats: List[str] = get_words(f'{FOLDER_NAME}/chats.txt') if os.path.exists(
         os.path.join(FOLDER_NAME, 'chats.txt')
     ) else get_words()
-    load_words = get_words(f'{FOLDER_NAME}/words.txt') if os.path.exists(
+    load_words: List[str] = get_words(f'{FOLDER_NAME}/words.txt') if os.path.exists(
         os.path.join(FOLDER_NAME, 'words.txt')
     ) else get_words()
 
-    updated_handler = MessageHandler(
+    updated_handler: MessageHandler = MessageHandler(
         random_answer, filters=filters.chat(chats=load_chats) & ~filters.regex(
             r"(?i)\b(" + '|'.join(load_skip_words) + r")\b"
         ) & filters.regex(
@@ -184,7 +184,7 @@ async def update_skip_words(client: Client, message: Message):
     await message.reply(text=stop_words_list_updated_message, quote=True)
 
 
-async def update_answers(client: Client, message: Message):
+async def update_answers(client: Client, message: Message) -> None:
     """
     Updates answers list.
     """
@@ -192,25 +192,25 @@ async def update_answers(client: Client, message: Message):
     await message.reply(text=answers_list_updated_message, quote=True)
 
 
-app = Client(name=SESSION_NAME, api_id=API_ID, api_hash=API_HASH)
+app: Client = Client(name=SESSION_NAME, api_id=API_ID, api_hash=API_HASH)
 
-chats_list = get_chats(f'{FOLDER_NAME}/chats.txt') if os.path.exists(
+chats_list: List[Union[str, int]] = get_chats(f'{FOLDER_NAME}/chats.txt') if os.path.exists(
     os.path.join(FOLDER_NAME, 'chats.txt')
 ) else get_chats()
-words_list = get_words(f'{FOLDER_NAME}/words.txt') if os.path.exists(
+words_list: List[str] = get_words(f'{FOLDER_NAME}/words.txt') if os.path.exists(
     os.path.join(FOLDER_NAME, 'words.txt')
 ) else get_words()
-skip_words_list = get_skip_words(f'{FOLDER_NAME}/skip_words.txt') if os.path.exists(
+skip_words_list: List[str] = get_skip_words(f'{FOLDER_NAME}/skip_words.txt') if os.path.exists(
     os.path.join(FOLDER_NAME, 'skip_words.txt')
 ) else get_skip_words()
 
 if len(skip_words_list) == 0:
-    regex_handler = MessageHandler(
+    regex_handler: MessageHandler = MessageHandler(
         random_answer,
         filters=filters.chat(chats=chats_list) & filters.regex(r"(?i)\b(" + '|'.join(words_list) + r")\b")
     )
 else:
-    regex_handler = MessageHandler(
+    regex_handler: MessageHandler = MessageHandler(
         random_answer,
         filters=filters.chat(chats=chats_list) & ~filters.regex(
             r"(?i)\b(" + '|'.join(skip_words_list) + r")\b"
@@ -219,27 +219,27 @@ else:
         )
     )
 
-command_list_handler = MessageHandler(
+command_list_handler: MessageHandler = MessageHandler(
     list_chats, filters=filters.chat(chats='me') & filters.command(commands=['list'])
 )
 
-file_chats_filter = filters.create(is_chats_document)
-file_chats_handler = MessageHandler(
+file_chats_filter: is_chats_document = filters.create(is_chats_document)
+file_chats_handler: MessageHandler = MessageHandler(
     update_chats, filters=filters.chat(chats='me') & filters.document & file_chats_filter
 )
 
-file_words_filter = filters.create(is_words_document)
-file_words_handler = MessageHandler(
+file_words_filter: is_words_document = filters.create(is_words_document)
+file_words_handler: MessageHandler = MessageHandler(
     update_words, filters=filters.chat(chats='me') & filters.document & file_words_filter
 )
 
-file_skip_words_filter = filters.create(is_skip_words_document)
-file_skip_words_handler = MessageHandler(
+file_skip_words_filter: is_skip_words_document = filters.create(is_skip_words_document)
+file_skip_words_handler: MessageHandler = MessageHandler(
     update_skip_words, filters=filters.chat(chats='me') & filters.document & file_skip_words_filter
 )
 
-file_answers_filter = filters.create(is_answers_document)
-file_answers_handler = MessageHandler(
+file_answers_filter: is_answers_document = filters.create(is_answers_document)
+file_answers_handler: MessageHandler = MessageHandler(
     update_answers, filters=filters.chat(chats='me') & filters.document & file_answers_filter
 )
 

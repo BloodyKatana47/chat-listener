@@ -1,4 +1,4 @@
-import re
+from re import compile, Pattern
 from pprint import pprint
 from typing import Union, List
 
@@ -9,7 +9,7 @@ def get_chats(file_path: str = 'chats.txt') -> Union[List[Union[str, int]], exit
     """
     try:
         with open(file_path, encoding='utf-8') as file:
-            chats = [line.strip() for line in file if line.strip()]
+            chats: List[str] = [line.strip() for line in file if line.strip()]
         if len(chats) == 0:
             raise ValueError
     except FileNotFoundError:
@@ -19,9 +19,9 @@ def get_chats(file_path: str = 'chats.txt') -> Union[List[Union[str, int]], exit
         print('Заполните файл chats.txt нужными чатами.')
         return exit()
 
-    username_pattern = re.compile(r'.*(?=\w{5,32}\b)[a-zA-Z0-9]+(?:_[a-zA-Z0-9]+)*.*')
+    username_pattern: Pattern = compile(r'.*(?=\w{5,32}\b)[a-zA-Z0-9]+(?:_[a-zA-Z0-9]+)*.*')
 
-    chats_list = []
+    chats_list: List[Union[int, str]] = []
     for chat in chats:
         try:
             chats_list.append(int(chat))
@@ -38,7 +38,7 @@ def get_words(file_path: str = 'words.txt') -> Union[List[str], exit]:
     """
     try:
         with open(file_path, encoding='utf-8') as file:
-            words_list = [line.strip() for line in file if line.strip()]
+            words_list: List[str] = [line.strip() for line in file if line.strip()]
         if len(words_list) == 0:
             raise ValueError
     except FileNotFoundError:
@@ -57,7 +57,7 @@ def get_skip_words(file_path: str = 'skip_words.txt') -> Union[List[str], exit]:
     """
     try:
         with open(file_path, encoding='utf-8') as file:
-            skip_words_list = [line.strip() for line in file if line.strip()]
+            skip_words_list: List[str] = [line.strip() for line in file if line.strip()]
     except FileNotFoundError:
         return []
     pprint(skip_words_list)
@@ -70,7 +70,7 @@ def get_answers(file_path: str = 'answers.txt') -> Union[List[str], exit]:
     """
     try:
         with open(file_path, encoding='utf-8') as file:
-            answers = file.read().split('===')
+            answers: List[str] = file.read().split('===')
         if answers[0] == '':
             raise ValueError
     except FileNotFoundError:

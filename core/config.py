@@ -10,4 +10,4 @@ class Settings(BaseSettings):
     folder_name: str = 'downloads'
 
 
-settings = Settings(_env_file=".env")
+settings: Settings = Settings(_env_file=".env")
