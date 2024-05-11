@@ -30,10 +30,7 @@ SESSION_NAME = settings.session_name
 FOLDER_NAME = settings.folder_name
 
 db = Database(DATABASE_NAME)
-
-
-async def _update_handlers():
-    return
+active_handler = []
 
 
 async def on_startup():
@@ -109,11 +106,10 @@ async def list_chats(client: Client, message: Message):
 
 async def update_words(client: Client, message: Message):
     """
-    Updates chats list.
+    Updates words list.
     """
-    doc_name = message.document.file_name
     await message.download()
-    load_chats = get_chats(f'{FOLDER_NAME}/{doc_name}')
+    load_chats = get_chats(f'{FOLDER_NAME}/chats.txt')
     load_words = get_words(f'{FOLDER_NAME}/words.txt') if os.path.exists(
         os.path.join(FOLDER_NAME, 'words.txt')
     ) else get_words()
@@ -123,18 +119,22 @@ async def update_words(client: Client, message: Message):
             chats=load_chats
         ) & filters.regex(r"(?i)\b(" + '|'.join(load_words) + r")\b")
     )
-    app.remove_handler(handler=regex_handler)
+
+    app.remove_handler(handler=active_handler[0])
+    active_handler.pop(0)
+
+    active_handler.append(updated_handler)
     app.add_handler(updated_handler)
+
     await message.reply(text=words_list_updated_message, quote=True)
 
 
 async def update_chats(client: Client, message: Message):
     """
-    Updates words list.
+    Updates chats list.
     """
-    doc_name = message.document.file_name
     await message.download()
-    load_words = get_words(f'{FOLDER_NAME}/{doc_name}')
+    load_words = get_words(f'{FOLDER_NAME}/words.txt')
     load_chats = get_chats(f'{FOLDER_NAME}/chats.txt') if os.path.exists(
         os.path.join(FOLDER_NAME, 'chats.txt')
     ) else get_chats()
@@ -144,8 +144,13 @@ async def update_chats(client: Client, message: Message):
             chats=load_chats
         ) & filters.regex(r"(?i)\b(" + '|'.join(load_words) + r")\b")
     )
-    app.remove_handler(handler=regex_handler)
+
+    app.remove_handler(handler=active_handler[0])
+    active_handler.pop(0)
+
+    active_handler.append(updated_handler)
     app.add_handler(updated_handler)
+
     await message.reply(text=chats_list_updated_message, quote=True)
 
 
@@ -154,23 +159,28 @@ async def update_skip_words(client: Client, message: Message):
     Updates skip_words list.
     """
     await message.download()
-    new_skip_words = get_skip_words(f'{FOLDER_NAME}/skip_words.txt')
-
-    update_chats_list = get_words(f'{FOLDER_NAME}/chats.txt') if os.path.exists(
+    load_skip_words = get_skip_words(f'{FOLDER_NAME}/skip_words.txt')
+    load_chats = get_words(f'{FOLDER_NAME}/chats.txt') if os.path.exists(
         os.path.join(FOLDER_NAME, 'chats.txt')
     ) else get_words()
-    update_words_list = get_words(f'{FOLDER_NAME}/words.txt') if os.path.exists(
+    load_words = get_words(f'{FOLDER_NAME}/words.txt') if os.path.exists(
         os.path.join(FOLDER_NAME, 'words.txt')
     ) else get_words()
-    new_regex_handler = MessageHandler(
-        random_answer, filters=filters.chat(chats=update_chats_list) & ~filters.regex(
-            r"(?i)\b(" + '|'.join(new_skip_words) + r")\b"
+
+    updated_handler = MessageHandler(
+        random_answer, filters=filters.chat(chats=load_chats) & ~filters.regex(
+            r"(?i)\b(" + '|'.join(load_skip_words) + r")\b"
         ) & filters.regex(
-            r"(?i)\b(" + '|'.join(update_words_list) + r")\b"
+            r"(?i)\b(" + '|'.join(load_words) + r")\b"
         )
     )
-    app.remove_handler(handler=regex_handler)
-    app.add_handler(new_regex_handler)
+
+    app.remove_handler(handler=active_handler[0])
+    active_handler.pop(0)
+
+    active_handler.append(updated_handler)
+    app.add_handler(updated_handler)
+
     await message.reply(text=stop_words_list_updated_message, quote=True)
 
 
@@ -233,11 +243,17 @@ file_answers_handler = MessageHandler(
     update_answers, filters=filters.chat(chats='me') & filters.document & file_answers_filter
 )
 
+active_handler.append(regex_handler)
 app.add_handler(regex_handler)
+
 app.add_handler(command_list_handler)
+
 app.add_handler(file_chats_handler)
+
 app.add_handler(file_words_handler)
+
 app.add_handler(file_skip_words_handler)
+
 app.add_handler(file_answers_handler)
 
 if __name__ == '__main__':
