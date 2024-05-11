@@ -69,7 +69,7 @@ async def random_answer(client: Client, message: Message) -> Union[None, exit]:
                 await app.send_message(chat_id=message.from_user.id, text=random_choice)
             except errors.UserBannedInChannel:
                 await app.send_message(chat_id=ADMIN_ID, text=spam_message)
-                exit()
+                return exit()
 
 
 async def list_chats(client: Client, message: Message) -> None:
