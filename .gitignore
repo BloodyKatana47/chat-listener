@@ -174,3 +174,5 @@ list_chats.json
 temp.json
 
 *.db
+
+accounts.json

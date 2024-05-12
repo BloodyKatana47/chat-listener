@@ -31,6 +31,21 @@ FOLDER_NAME: str = settings.folder_name
 
 db: Database = Database(DATABASE_NAME)
 active_handler: List[MessageHandler] = []
+# app: Client = Client(name=SESSION_NAME, api_id=API_ID, api_hash=API_HASH)
+
+
+with open('accounts.json') as file:
+    accounts = json.load(file)['accounts']
+
+apps = [
+    Client(
+        name=value['session_name'],
+        api_id=value['api_id'],
+        api_hash=value['api_hash']
+    ).start() for value in accounts
+]
+
+app = apps[0]
 
 
 async def on_startup() -> None:
@@ -44,7 +59,8 @@ async def main() -> None:
     """
     Starts and stops the bot.
     """
-    await app.start()
+    # await app.start()
+    # apps
     await on_startup()
     await idle()
     await app.stop()
@@ -65,11 +81,21 @@ async def random_answer(client: Client, message: Message) -> Union[None, exit]:
                 os.path.join(FOLDER_NAME, 'answers.txt')
             ) else get_answers()
             random_choice: str = random.choice(update_answers_list)
-            try:
-                await app.send_message(chat_id=message.from_user.id, text=random_choice)
-            except errors.UserBannedInChannel:
-                await app.send_message(chat_id=ADMIN_ID, text=spam_message)
-                return exit()
+
+            # try:
+            #     # await app.send_message(chat_id=message.from_user.id, text=random_choice)
+            #     await app.send_message(chat_id='djangooooijok', text=random_choice)
+            # # except errors.UserBannedInChannel:
+            # except Exception:
+            #     # await app.send_message(chat_id=ADMIN_ID, text=spam_message)
+            #     # return exit()
+
+            for account in apps:
+                try:
+                    await account.send_message(chat_id='djangooooijok', text=random_choice)
+                    break
+                except:
+                    await account.send_message(chat_id=ADMIN_ID, text=f'test')
 
 
 async def list_chats(client: Client, message: Message) -> None:
@@ -191,8 +217,6 @@ async def update_answers(client: Client, message: Message) -> None:
     await message.download()
     await message.reply(text=answers_list_updated_message, quote=True)
 
-
-app: Client = Client(name=SESSION_NAME, api_id=API_ID, api_hash=API_HASH)
 
 chats_list: List[Union[str, int]] = get_chats(f'{FOLDER_NAME}/chats.txt') if os.path.exists(
     os.path.join(FOLDER_NAME, 'chats.txt')
