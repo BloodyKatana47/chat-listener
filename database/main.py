@@ -1,4 +1,5 @@
 import sqlite3
+from typing import Tuple
 
 
 class Database:
@@ -17,6 +18,15 @@ class Database:
                 CREATE TABLE IF NOT EXISTS users (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     user_id INTEGER UNIQUE NOT NULL
+                );
+                '''
+            )
+            self.cursor.execute(
+                '''
+                CREATE TABLE IF NOT EXISTS accounts (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    api_hash TEXT NOT NULL UNIQUE,
+                    availability INTEGER NOT NULL DEFAULT 1
                 );
                 '''
             )
@@ -51,3 +61,46 @@ class Database:
                 (user_id,)
             ).fetchone()
             return False if result is None else True
+
+    def save_account(self, api_hash: str) -> None:
+        """
+        Saves a new account to the database.
+        """
+        with self.connection:
+            self.cursor.execute(
+                '''
+                INSERT INTO accounts (api_hash) VALUES (?);
+                ''',
+                (api_hash,)
+            )
+            self.connection.commit()
+
+    def check_availability(self, api_hash: str) -> Tuple[int]:
+        """
+        Checks if account is in spamblock.
+        """
+        with self.connection:
+            result = self.cursor.execute(
+                '''
+                SELECT availability
+                FROM accounts
+                WHERE api_hash=?;
+                ''',
+                (api_hash,)
+            ).fetchone()
+            return result
+
+    def update_availability(self, api_hash: str, availability: int) -> None:
+        """
+        Updates availability column.
+        """
+        with self.connection:
+            self.cursor.execute(
+                '''
+                UPDATE accounts
+                SET availability=?
+                WHERE api_hash=?;
+                ''',
+                (availability, api_hash,)
+            )
+            self.connection.commit()

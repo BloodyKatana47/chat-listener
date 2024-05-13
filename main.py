@@ -1,13 +1,13 @@
 import json
 import os
 import random
-from typing import List, Union, Dict
+from typing import List, Union, Dict, Tuple
 
 from pyrogram import Client, filters, idle, errors
 from pyrogram.handlers import MessageHandler
 from pyrogram.types import Message
 
-from core import settings
+from core import settings, load_accounts_configs
 from database import Database
 from filters import is_chats_document, is_words_document, is_skip_words_document, is_answers_document
 from utils.captions import (
@@ -22,15 +22,22 @@ from utils.captions import (
 )
 from utils.files import get_chats, get_words, get_skip_words, get_answers
 
-API_ID: int = settings.api_id
-API_HASH: str = settings.api_hash
-ADMIN_ID: int = settings.admin_id
+ADMIN_USERNAME: str = settings.admin_username
 DATABASE_NAME: str = settings.database_name
-SESSION_NAME: str = settings.session_name
 FOLDER_NAME: str = settings.folder_name
 
 db: Database = Database(DATABASE_NAME)
 active_handler: List[MessageHandler] = []
+
+apps: List[Client] = [
+    Client(
+        name=value['session_name'],
+        api_id=value['api_id'],
+        api_hash=value['api_hash']
+    ).start() for value in load_accounts_configs()
+]
+
+app: Client = apps[0]
 
 
 async def on_startup() -> None:
@@ -42,12 +49,12 @@ async def on_startup() -> None:
 
 async def main() -> None:
     """
-    Starts and stops the bot.
+    Calls startup() function for sending startup message and stops
     """
-    await app.start()
     await on_startup()
     await idle()
-    await app.stop()
+    for _app in apps:
+        await _app.stop()
 
 
 async def random_answer(client: Client, message: Message) -> Union[None, exit]:
@@ -59,17 +66,36 @@ async def random_answer(client: Client, message: Message) -> Union[None, exit]:
         user_id: int = message.from_user.id
         user_exists: bool = db.check_user(user_id)
         if not user_exists:
-            db.create_user(user_id)
-
             update_answers_list: List[str] = get_answers(f'{FOLDER_NAME}/answers.txt') if os.path.exists(
                 os.path.join(FOLDER_NAME, 'answers.txt')
             ) else get_answers()
             random_choice: str = random.choice(update_answers_list)
-            try:
-                await app.send_message(chat_id=message.from_user.id, text=random_choice)
-            except errors.UserBannedInChannel:
-                await app.send_message(chat_id=ADMIN_ID, text=spam_message)
-                return exit()
+
+            for account in apps:
+                api_hash: str = account.api_hash
+                availability: Union[Tuple[int], None] = db.check_availability(api_hash=api_hash)
+                try:
+                    await account.send_message(chat_id=message.from_user.id, text=random_choice)
+
+                    if availability is None:
+                        db.save_account(api_hash=api_hash)
+                    else:
+                        db.update_availability(api_hash=api_hash, availability=1)
+
+                    db.create_user(user_id)
+                    break
+                except errors.UserBannedInChannel:
+                    if availability is None:
+                        db.save_account(api_hash=api_hash)
+                        db.update_availability(api_hash=api_hash, availability=0)
+
+                        await account.send_message(chat_id=ADMIN_USERNAME, text=spam_message)
+                    elif availability[0] == 1:
+                        db.update_availability(api_hash=api_hash, availability=0)
+
+                        await account.send_message(chat_id=ADMIN_USERNAME, text=spam_message)
+                    else:
+                        continue
 
 
 async def list_chats(client: Client, message: Message) -> None:
@@ -191,8 +217,6 @@ async def update_answers(client: Client, message: Message) -> None:
     await message.download()
     await message.reply(text=answers_list_updated_message, quote=True)
 
-
-app: Client = Client(name=SESSION_NAME, api_id=API_ID, api_hash=API_HASH)
 
 chats_list: List[Union[str, int]] = get_chats(f'{FOLDER_NAME}/chats.txt') if os.path.exists(
     os.path.join(FOLDER_NAME, 'chats.txt')

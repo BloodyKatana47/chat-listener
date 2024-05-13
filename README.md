@@ -15,13 +15,17 @@
 
 ## Setting up Telegram Account (Listener)
 
-### You will need one Telegram Account
+### You will need at least one Telegram Account
 
 #### Create .env file in the project directory. .env_example file can be used as an example.
 
-- `API_HASH` : Can be obtained here: https://my.telegram.org
-- `API_ID`: Can be obtained here: https://my.telegram.org
-- `ADMIN_ID`: Admin account ID to which will be sent notification in case account gets limited from sending messages. Can be obtained here: https://t.me/getmyid_bot
+- `ADMIN_USERNAME`: Admin account username to which will be sent notification in case account gets limited from sending messages
+
+## Create accounts.json file and fill it using accounts.json_example as a sample.
+
+- `api_hash` : Can be obtained here: https://my.telegram.org
+- `api_id`: Can be obtained here: https://my.telegram.org
+- `session_name`: Any name for session. Must be unique
 
 ## Configuring .txt files
 

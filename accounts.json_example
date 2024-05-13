@@ -1,0 +1,14 @@
+{
+  "accounts": [
+    {
+      "api_hash": "...",
+      "api_id": ...,
+      "session_name": "my_account1"
+    },
+    {
+      "api_hash": "...",
+      "api_id": ...,
+      "session_name": "my_account2"
+    }
+  ]
+}
