@@ -285,5 +285,4 @@ if __name__ == '__main__':
         app.run(main())
     except errors.PhoneNumberBanned:
         print(account_blocked_message)
-        print('Удалите из accounts.json забаненный аккаунт')
         exit()

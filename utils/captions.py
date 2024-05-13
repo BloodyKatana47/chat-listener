@@ -26,4 +26,4 @@ stop_words_list_updated_message: str = 'Список стоп-слов был у
 
 answers_list_updated_message: str = 'Список заготовленных ответов был успешно обновлён!'
 
-account_blocked_message: str = f'\n---Аккаунт заблокирован---\n'
+account_blocked_message: str = f'\n---Аккаунт заблокирован---\nУдалите из accounts.json забаненный аккаунт\n'
