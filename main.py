@@ -42,6 +42,23 @@ apps: List[Client] = [
 app: Client = apps[0]
 
 
+def update_handler(chats: List[str], words: List[str]) -> None:
+    """
+    Takes a list of chats and a list of words, removes old handler and registers a new one.
+    """
+    updated_handler: MessageHandler = MessageHandler(
+        random_answer, filters=filters.chat(
+            chats=chats
+        ) & filters.regex(r"(?i)\b(" + '|'.join(words) + r")\b")
+    )
+
+    app.remove_handler(handler=active_handler[0])
+    active_handler.pop(0)
+
+    active_handler.append(updated_handler)
+    app.add_handler(updated_handler)
+
+
 async def on_startup() -> None:
     """
     Sends startup message.
@@ -152,17 +169,7 @@ async def update_words(client: Client, message: Message) -> None:
         os.path.join(FILE_FOLDER_NAME, 'words.txt')
     ) else get_words()
 
-    updated_handler: MessageHandler = MessageHandler(
-        random_answer, filters=filters.chat(
-            chats=load_chats
-        ) & filters.regex(r"(?i)\b(" + '|'.join(load_words) + r")\b")
-    )
-
-    app.remove_handler(handler=active_handler[0])
-    active_handler.pop(0)
-
-    active_handler.append(updated_handler)
-    app.add_handler(updated_handler)
+    update_handler(words=load_words, chats=load_chats)
 
     await message.reply(text=words_list_updated_message, quote=True)
 
@@ -177,17 +184,7 @@ async def update_chats(client: Client, message: Message) -> None:
         os.path.join(FILE_FOLDER_NAME, 'chats.txt')
     ) else get_chats()
 
-    updated_handler: MessageHandler = MessageHandler(
-        random_answer, filters=filters.chat(
-            chats=load_chats
-        ) & filters.regex(r"(?i)\b(" + '|'.join(load_words) + r")\b")
-    )
-
-    app.remove_handler(handler=active_handler[0])
-    active_handler.pop(0)
-
-    active_handler.append(updated_handler)
-    app.add_handler(updated_handler)
+    update_handler(words=load_words, chats=load_chats)
 
     await message.reply(text=chats_list_updated_message, quote=True)
 
@@ -240,57 +237,57 @@ skip_words_list: List[str] = get_skip_words(f'{FILE_FOLDER_NAME}/skip_words.txt'
     os.path.join(FILE_FOLDER_NAME, 'skip_words.txt')
 ) else get_skip_words()
 
-if len(skip_words_list) == 0:
-    regex_handler: MessageHandler = MessageHandler(
-        random_answer,
-        filters=filters.chat(chats=chats_list) & filters.regex(r"(?i)\b(" + '|'.join(words_list) + r")\b")
-    )
-else:
-    regex_handler: MessageHandler = MessageHandler(
-        random_answer,
-        filters=filters.chat(chats=chats_list) & ~filters.regex(
-            r"(?i)\b(" + '|'.join(skip_words_list) + r")\b"
-        ) & filters.regex(
-            r"(?i)\b(" + '|'.join(words_list) + r")\b"
+
+def _return_main_handlers(handler: str):
+    """
+    Returns handlers for all documents.
+    """
+    if handler == 'chats':
+        return MessageHandler(
+            update_chats,
+            filters=filters.chat('me') & filters.document & filters.create(is_chats_document)
         )
-    )
+    elif handler == 'words':
+        return MessageHandler(
+            update_words,
+            filters=filters.chat(chats='me') & filters.document & filters.create(is_words_document)
+        )
+    elif handler == 'skip_words':
+        return MessageHandler(
+            update_skip_words,
+            filters=filters.chat(chats='me') & filters.document & filters.create(is_skip_words_document)
+        )
+    elif handler == 'answers':
+        return MessageHandler(
+            update_answers,
+            filters=filters.chat(chats='me') & filters.document & filters.create(is_answers_document)
+        )
+    elif handler == 'list':
+        return MessageHandler(
+            list_chats,
+            filters=filters.chat(chats='me') & filters.command(commands=['list'])
+        )
+    else:
+        if len(skip_words_list) == 0:
+            return MessageHandler(
+                random_answer,
+                filters=filters.chat(chats=chats_list) & filters.regex(r"(?i)\b(" + '|'.join(words_list) + r")\b")
+            )
+        else:
+            return MessageHandler(
+                random_answer,
+                filters=filters.chat(chats=chats_list) & ~filters.regex(
+                    r"(?i)\b(" + '|'.join(skip_words_list) + r")\b"
+                ) & filters.regex(
+                    r"(?i)\b(" + '|'.join(words_list) + r")\b"
+                )
+            )
 
-command_list_handler: MessageHandler = MessageHandler(
-    list_chats, filters=filters.chat(chats='me') & filters.command(commands=['list'])
-)
 
-file_chats_filter: is_chats_document = filters.create(is_chats_document)
-file_chats_handler: MessageHandler = MessageHandler(
-    update_chats, filters=filters.chat(chats='me') & filters.document & file_chats_filter
-)
-
-file_words_filter: is_words_document = filters.create(is_words_document)
-file_words_handler: MessageHandler = MessageHandler(
-    update_words, filters=filters.chat(chats='me') & filters.document & file_words_filter
-)
-
-file_skip_words_filter: is_skip_words_document = filters.create(is_skip_words_document)
-file_skip_words_handler: MessageHandler = MessageHandler(
-    update_skip_words, filters=filters.chat(chats='me') & filters.document & file_skip_words_filter
-)
-
-file_answers_filter: is_answers_document = filters.create(is_answers_document)
-file_answers_handler: MessageHandler = MessageHandler(
-    update_answers, filters=filters.chat(chats='me') & filters.document & file_answers_filter
-)
-
-active_handler.append(regex_handler)
-app.add_handler(regex_handler)
-
-app.add_handler(command_list_handler)
-
-app.add_handler(file_chats_handler)
-
-app.add_handler(file_words_handler)
-
-app.add_handler(file_skip_words_handler)
-
-app.add_handler(file_answers_handler)
+for handler_type in ['main', 'list', 'words', 'chats', 'skip_words', 'answers']:
+    if handler_type == 'main':
+        active_handler.append(_return_main_handlers(handler_type))
+    app.add_handler(_return_main_handlers(handler_type))
 
 if __name__ == '__main__':
     try:
