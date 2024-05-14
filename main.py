@@ -24,7 +24,8 @@ from utils.files import get_chats, get_words, get_skip_words, get_answers
 
 ADMIN_USERNAME: str = settings.admin_username
 DATABASE_NAME: str = settings.database_name
-FOLDER_NAME: str = settings.folder_name
+FILE_FOLDER_NAME: str = settings.files_folder_name
+SESSION_FOLDER_NAME: str = settings.sessions_folder_name
 
 db: Database = Database(DATABASE_NAME)
 active_handler: List[MessageHandler] = []
@@ -33,7 +34,8 @@ apps: List[Client] = [
     Client(
         name=value['session_name'],
         api_id=value['api_id'],
-        api_hash=value['api_hash']
+        api_hash=value['api_hash'],
+        workdir=SESSION_FOLDER_NAME
     ).start() for value in load_accounts_configs()
 ]
 
@@ -44,6 +46,16 @@ async def on_startup() -> None:
     """
     Sends startup message.
     """
+    try:
+        os.mkdir(FILE_FOLDER_NAME)
+    except FileExistsError:
+        pass
+
+    try:
+        os.mkdir(SESSION_FOLDER_NAME)
+    except FileExistsError:
+        pass
+
     await app.send_message(chat_id='me', text=startup_message)
 
 
@@ -66,8 +78,8 @@ async def random_answer(client: Client, message: Message) -> Union[None, exit]:
         user_id: int = message.from_user.id
         user_exists: bool = db.check_user(user_id)
         if not user_exists:
-            update_answers_list: List[str] = get_answers(f'{FOLDER_NAME}/answers.txt') if os.path.exists(
-                os.path.join(FOLDER_NAME, 'answers.txt')
+            update_answers_list: List[str] = get_answers(f'{FILE_FOLDER_NAME}/answers.txt') if os.path.exists(
+                os.path.join(FILE_FOLDER_NAME, 'answers.txt')
             ) else get_answers()
             random_choice: str = random.choice(update_answers_list)
 
@@ -135,9 +147,9 @@ async def update_words(client: Client, message: Message) -> None:
     Updates words list.
     """
     await message.download()
-    load_chats: List[Union[str, int]] = get_chats(f'{FOLDER_NAME}/chats.txt')
-    load_words: List[str] = get_words(f'{FOLDER_NAME}/words.txt') if os.path.exists(
-        os.path.join(FOLDER_NAME, 'words.txt')
+    load_chats: List[Union[str, int]] = get_chats(f'{FILE_FOLDER_NAME}/chats.txt')
+    load_words: List[str] = get_words(f'{FILE_FOLDER_NAME}/words.txt') if os.path.exists(
+        os.path.join(FILE_FOLDER_NAME, 'words.txt')
     ) else get_words()
 
     updated_handler: MessageHandler = MessageHandler(
@@ -160,9 +172,9 @@ async def update_chats(client: Client, message: Message) -> None:
     Updates chats list.
     """
     await message.download()
-    load_words: List[str] = get_words(f'{FOLDER_NAME}/words.txt')
-    load_chats: List[Union[str, int]] = get_chats(f'{FOLDER_NAME}/chats.txt') if os.path.exists(
-        os.path.join(FOLDER_NAME, 'chats.txt')
+    load_words: List[str] = get_words(f'{FILE_FOLDER_NAME}/words.txt')
+    load_chats: List[Union[str, int]] = get_chats(f'{FILE_FOLDER_NAME}/chats.txt') if os.path.exists(
+        os.path.join(FILE_FOLDER_NAME, 'chats.txt')
     ) else get_chats()
 
     updated_handler: MessageHandler = MessageHandler(
@@ -185,12 +197,12 @@ async def update_skip_words(client: Client, message: Message) -> None:
     Updates skip_words list.
     """
     await message.download()
-    load_skip_words: List[str] = get_skip_words(f'{FOLDER_NAME}/skip_words.txt')
-    load_chats: List[str] = get_words(f'{FOLDER_NAME}/chats.txt') if os.path.exists(
-        os.path.join(FOLDER_NAME, 'chats.txt')
+    load_skip_words: List[str] = get_skip_words(f'{FILE_FOLDER_NAME}/skip_words.txt')
+    load_chats: List[str] = get_words(f'{FILE_FOLDER_NAME}/chats.txt') if os.path.exists(
+        os.path.join(FILE_FOLDER_NAME, 'chats.txt')
     ) else get_words()
-    load_words: List[str] = get_words(f'{FOLDER_NAME}/words.txt') if os.path.exists(
-        os.path.join(FOLDER_NAME, 'words.txt')
+    load_words: List[str] = get_words(f'{FILE_FOLDER_NAME}/words.txt') if os.path.exists(
+        os.path.join(FILE_FOLDER_NAME, 'words.txt')
     ) else get_words()
 
     updated_handler: MessageHandler = MessageHandler(
@@ -218,14 +230,14 @@ async def update_answers(client: Client, message: Message) -> None:
     await message.reply(text=answers_list_updated_message, quote=True)
 
 
-chats_list: List[Union[str, int]] = get_chats(f'{FOLDER_NAME}/chats.txt') if os.path.exists(
-    os.path.join(FOLDER_NAME, 'chats.txt')
+chats_list: List[Union[str, int]] = get_chats(f'{FILE_FOLDER_NAME}/chats.txt') if os.path.exists(
+    os.path.join(FILE_FOLDER_NAME, 'chats.txt')
 ) else get_chats()
-words_list: List[str] = get_words(f'{FOLDER_NAME}/words.txt') if os.path.exists(
-    os.path.join(FOLDER_NAME, 'words.txt')
+words_list: List[str] = get_words(f'{FILE_FOLDER_NAME}/words.txt') if os.path.exists(
+    os.path.join(FILE_FOLDER_NAME, 'words.txt')
 ) else get_words()
-skip_words_list: List[str] = get_skip_words(f'{FOLDER_NAME}/skip_words.txt') if os.path.exists(
-    os.path.join(FOLDER_NAME, 'skip_words.txt')
+skip_words_list: List[str] = get_skip_words(f'{FILE_FOLDER_NAME}/skip_words.txt') if os.path.exists(
+    os.path.join(FILE_FOLDER_NAME, 'skip_words.txt')
 ) else get_skip_words()
 
 if len(skip_words_list) == 0:

@@ -4,4 +4,5 @@ from pydantic_settings import BaseSettings
 class Settings(BaseSettings):
     admin_username: str
     database_name: str = 'users.db'
-    folder_name: str = 'downloads'
+    files_folder_name: str = 'downloads'
+    sessions_folder_name: str = 'sessions'
