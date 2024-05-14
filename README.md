@@ -11,23 +11,23 @@
 
 ## Creating database
 
-### Just run `create_database.py` one time.
+### You do not have to do anything. It will be created automatically.
 
 ## Setting up Telegram Account (Listener)
 
 ### You will need at least one Telegram Account
 
-#### Create .env file in the project directory. .env_example file can be used as an example.
+#### Create `.env` file in the project directory. `.env_example` file can be used as an example.
 
 - `ADMIN_USERNAME`: Admin account username to which will be sent notification in case account gets limited from sending messages
 
-## Create accounts.json file and fill it using accounts.json_example as a sample.
+## Create `accounts.json` file and fill it using `accounts.json_example` as a sample.
 
 - `api_hash` : Can be obtained here: https://my.telegram.org
 - `api_id`: Can be obtained here: https://my.telegram.org
 - `session_name`: Any name for session. Must be unique
 
-## Configuring .txt files
+## Configuring `.txt` files
 
 - `chats.txt` : IDs/usernames of chats that must be listened
 - `words.txt`: All trigger-words
@@ -36,7 +36,7 @@
 
 #### As mentioned before, you can specify chats by ID or username.
 
-#### In chats.txt you should not put links to public chats or usernames with https://t.me and @
+#### In `chats.txt` you should not put links to public chats or usernames with https://t.me and @
 
 #### Do it like this:
 
@@ -57,6 +57,6 @@ Second response text
 Third response text
 ```
 
-**Example files were added in order to help with configuring the user bot ❗**
+**Example files were added in order to help with configuring the user bot❗**
 
 ### Show some ❤️ and ⭐ the repo to support the project!
