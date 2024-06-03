@@ -86,7 +86,7 @@ async def main() -> None:
         await _app.stop()
 
 
-async def random_answer(client: Client, message: Message) -> Union[None, exit]:
+async def random_answer(client: Client, message: Message) -> None:
     """
     Checks whether user exists in the database.
     In case if the one does not, it sends one random private message to the user.
