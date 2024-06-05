@@ -3,6 +3,7 @@ import os
 import random
 from typing import List, Union, Dict, Tuple
 
+from lingua import Language, LanguageDetectorBuilder, LanguageDetector
 from pyrogram import Client, filters, idle, errors
 from pyrogram.handlers import MessageHandler
 from pyrogram.types import Message
@@ -95,9 +96,19 @@ async def random_answer(client: Client, message: Message) -> None:
         user_id: int = message.from_user.id
         user_exists: bool = db.check_user(user_id)
         if not user_exists:
-            update_answers_list: List[str] = get_answers(f'{FILE_FOLDER_NAME}/answers.txt') if os.path.exists(
-                os.path.join(FILE_FOLDER_NAME, 'answers.txt')
-            ) else get_answers()
+            message_text_and_caption: Tuple[Union[str, None], Union[str, None]] = message.text, message.caption
+            message_content: str = next(filter(lambda text: text is not None, message_text_and_caption), None)
+
+            languages: List[Language] = [Language.RUSSIAN, Language.UKRAINIAN, Language.ENGLISH]
+            detector: LanguageDetector = LanguageDetectorBuilder.from_languages(*languages).build()
+            content_language: Language = detector.detect_language_of(message_content)
+            content_language_short_name: str = content_language.iso_code_639_1.name.lower()
+
+            file_name: str = f'answers_{content_language_short_name}.txt'
+            file_exists: bool = os.path.exists(os.path.join(FILE_FOLDER_NAME, file_name))
+            update_answers_list: List[str] = get_answers(
+                f'{FILE_FOLDER_NAME}/{file_name}'
+            ) if file_exists else get_answers()
             random_choice: str = random.choice(update_answers_list)
 
             for account in apps:
@@ -111,7 +122,7 @@ async def random_answer(client: Client, message: Message) -> None:
                     else:
                         db.update_availability(api_hash=api_hash, availability=1)
 
-                    db.create_user(user_id)
+                    db.save_user(user_id)
                     break
                 except errors.UserBannedInChannel:
                     if availability is None:

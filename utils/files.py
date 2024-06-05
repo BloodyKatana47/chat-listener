@@ -1,5 +1,5 @@
-from re import compile, Pattern
 from pprint import pprint
+from re import compile, Pattern
 from typing import Union, List
 
 

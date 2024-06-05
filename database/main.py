@@ -32,7 +32,7 @@ class Database:
             )
             self.connection.commit()
 
-    def create_user(self, user_id: int) -> sqlite3.Cursor:
+    def save_user(self, user_id: int) -> sqlite3.Cursor:
         """
         Creates a new user in the database.
         """
