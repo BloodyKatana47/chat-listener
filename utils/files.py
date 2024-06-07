@@ -64,9 +64,9 @@ def get_skip_words(file_path: str = 'skip_words.txt') -> Union[List[str], exit]:
     return skip_words_list
 
 
-def get_answers(file_path: str = 'answers.txt') -> Union[List[str], exit]:
+def get_first_answers(file_path: str = 'first_answers_en.txt') -> Union[List[str], exit]:
     """
-    Opens 'answers.txt' and returns a list of answers.
+    Opens 'first_answers_$LANGUAGE.txt' and returns a list of answers.
     """
     try:
         with open(file_path, encoding='utf-8') as file:
@@ -74,9 +74,27 @@ def get_answers(file_path: str = 'answers.txt') -> Union[List[str], exit]:
         if answers[0] == '':
             raise ValueError
     except FileNotFoundError:
-        print('Создайте файл answers.txt и укажите в нём нужные заготовленные ответы.')
+        print('Создайте файл first_answers_en.txt и укажите в нём нужные заготовленные ответы.')
         return exit()
     except ValueError:
-        print('Заполните файл answers.txt нужными ответами.')
+        print('Заполните файл first_answers_en.txt нужными ответами.')
+        return exit()
+    return answers
+
+
+def get_second_answers(file_path: str = 'second_answers_en.txt') -> Union[List[str], exit]:
+    """
+    Opens 'second_answers_$LANGUAGE.txt' and returns a list of answers.
+    """
+    try:
+        with open(file_path, encoding='utf-8') as file:
+            answers: List[str] = file.read().split('===')
+        if answers[0] == '':
+            raise ValueError
+    except FileNotFoundError:
+        print('Создайте файл second_answers_en.txt и укажите в нём нужные заготовленные ответы.')
+        return exit()
+    except ValueError:
+        print('Заполните файл second_answers_en.txt нужными ответами.')
         return exit()
     return answers

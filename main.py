@@ -21,7 +21,7 @@ from utils.captions import (
     answers_list_updated_message,
     account_blocked_message,
 )
-from utils.files import get_chats, get_words, get_skip_words, get_answers
+from utils.files import get_chats, get_words, get_skip_words, get_first_answers, get_second_answers
 
 ADMIN_USERNAME: str = settings.admin_username
 DATABASE_NAME: str = settings.database_name
@@ -30,6 +30,7 @@ SESSION_FOLDER_NAME: str = settings.sessions_folder_name
 
 db: Database = Database(DATABASE_NAME)
 active_handler: List[MessageHandler] = []
+active_second_handler: List[MessageHandler] = []
 
 apps: List[Client] = [
     Client(
@@ -57,6 +58,22 @@ def update_handler(chats: List[str], words: List[str]) -> None:
     active_handler.pop(0)
 
     active_handler.append(updated_handler)
+    app.add_handler(updated_handler)
+
+
+def update_second_handler() -> None:
+    """
+    Updates a list of chats to listen for second answer.
+    """
+    updated_handler: MessageHandler = MessageHandler(
+        random_second_answer,
+        filters=filters.chat(chats=db.list_pending_users())
+    )
+    if len(active_second_handler) > 0:
+        app.remove_handler(handler=active_second_handler[0])
+        active_second_handler.pop(0)
+
+    active_second_handler.append(updated_handler)
     app.add_handler(updated_handler)
 
 
@@ -104,16 +121,16 @@ async def random_answer(client: Client, message: Message) -> None:
             content_language: Language = detector.detect_language_of(message_content)
             content_language_short_name: str = content_language.iso_code_639_1.name.lower()
 
-            file_name: str = f'answers_{content_language_short_name}.txt'
+            file_name: str = f'first_answers_{content_language_short_name}.txt'
             file_exists: bool = os.path.exists(os.path.join(FILE_FOLDER_NAME, file_name))
-            update_answers_list: List[str] = get_answers(
+            update_answers_list: List[str] = get_first_answers(
                 f'{FILE_FOLDER_NAME}/{file_name}'
-            ) if file_exists else get_answers()
+            ) if file_exists else get_first_answers()
             random_choice: str = random.choice(update_answers_list)
 
             for account in apps:
                 api_hash: str = account.api_hash
-                availability: Union[Tuple[int], None] = db.check_availability(api_hash=api_hash)
+                availability: Union[Tuple[int], None] = db.get_account_availability(api_hash=api_hash)
                 try:
                     await account.send_message(chat_id=message.from_user.id, text=random_choice)
 
@@ -122,7 +139,10 @@ async def random_answer(client: Client, message: Message) -> None:
                     else:
                         db.update_availability(api_hash=api_hash, availability=1)
 
-                    db.save_user(user_id)
+                    db.save_user(user_id, content_language_short_name)
+
+                    update_second_handler()
+
                     break
                 except errors.UserBannedInChannel:
                     if availability is None:
@@ -136,6 +156,53 @@ async def random_answer(client: Client, message: Message) -> None:
                         await account.send_message(chat_id=ADMIN_USERNAME, text=spam_message)
                     else:
                         continue
+
+
+async def random_second_answer(client: Client, message: Message) -> None:
+    """
+    Sends second message after receiving answer.
+    """
+    if message.from_user is not None and not message.from_user.is_bot:
+        user_id: int = message.from_user.id
+
+        user: Tuple[str] = db.get_user_language(user_id)
+        user_language: str = user[0]
+
+        file_name: str = f'second_answers_{user_language}.txt'
+        file_exists: bool = os.path.exists(os.path.join(FILE_FOLDER_NAME, file_name))
+        update_answers_list: List[str] = get_second_answers(
+            f'{FILE_FOLDER_NAME}/{file_name}'
+        ) if file_exists else get_second_answers()
+        random_choice: str = random.choice(update_answers_list)
+
+        for account in apps:
+            api_hash: str = account.api_hash
+            availability: Union[Tuple[int], None] = db.get_account_availability(api_hash=api_hash)
+            try:
+                await account.send_message(chat_id=user_id, text=random_choice)
+
+                if availability is None:
+                    db.save_account(api_hash=api_hash)
+                else:
+                    db.update_availability(api_hash=api_hash, availability=1)
+
+                db.update_received_ad(user_id)
+
+                update_second_handler()
+
+                break
+            except errors.UserBannedInChannel:
+                if availability is None:
+                    db.save_account(api_hash=api_hash)
+                    db.update_availability(api_hash=api_hash, availability=0)
+
+                    await account.send_message(chat_id=ADMIN_USERNAME, text=spam_message)
+                elif availability[0] == 1:
+                    db.update_availability(api_hash=api_hash, availability=0)
+
+                    await account.send_message(chat_id=ADMIN_USERNAME, text=spam_message)
+                else:
+                    continue
 
 
 async def list_chats(client: Client, message: Message) -> None:
@@ -249,35 +316,41 @@ skip_words_list: List[str] = get_skip_words(f'{FILE_FOLDER_NAME}/skip_words.txt'
 ) else get_skip_words()
 
 
-def _return_main_handlers(handler: str):
+def _return_main_handlers(required_handler: str):
     """
     Returns handlers for all documents.
     """
-    if handler == 'chats':
+    if required_handler == 'chats':
         return MessageHandler(
             update_chats,
             filters=filters.chat('me') & filters.document & filters.create(is_chats_document)
         )
-    elif handler == 'words':
+    elif required_handler == 'words':
         return MessageHandler(
             update_words,
             filters=filters.chat(chats='me') & filters.document & filters.create(is_words_document)
         )
-    elif handler == 'skip_words':
+    elif required_handler == 'skip_words':
         return MessageHandler(
             update_skip_words,
             filters=filters.chat(chats='me') & filters.document & filters.create(is_skip_words_document)
         )
-    elif handler == 'answers':
+    elif required_handler == 'answers':
         return MessageHandler(
             update_answers,
             filters=filters.chat(chats='me') & filters.document & filters.create(is_answers_document)
         )
-    elif handler == 'list':
+    elif required_handler == 'list':
         return MessageHandler(
             list_chats,
             filters=filters.chat(chats='me') & filters.command(commands=['list'])
         )
+    elif required_handler == 'second_answer':
+        chats = db.list_pending_users()
+        return MessageHandler(
+            random_second_answer,
+            filters=filters.chat(chats=chats)
+        ) if len(chats) > 0 else None
     else:
         if len(skip_words_list) == 0:
             return MessageHandler(
@@ -295,10 +368,15 @@ def _return_main_handlers(handler: str):
             )
 
 
-for handler_type in ['main', 'list', 'words', 'chats', 'skip_words', 'answers']:
-    if handler_type == 'main':
-        active_handler.append(_return_main_handlers(handler_type))
-    app.add_handler(_return_main_handlers(handler_type))
+for handler_type in ['main', 'list', 'words', 'chats', 'skip_words', 'answers', 'second_answer']:
+    handler = _return_main_handlers(handler_type)
+    if handler is not None:
+        if handler_type == 'main':
+            active_handler.append(handler)
+        elif handler_type == 'second_answer':
+            active_second_handler.append(handler)
+
+        app.add_handler(handler)
 
 if __name__ == '__main__':
     try:

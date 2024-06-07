@@ -1,5 +1,5 @@
 import sqlite3
-from typing import Tuple
+from typing import Tuple, List
 
 
 class Database:
@@ -16,8 +16,9 @@ class Database:
             self.cursor.execute(
                 '''
                 CREATE TABLE IF NOT EXISTS users (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    user_id INTEGER UNIQUE NOT NULL
+                    user_id INTEGER PRIMARY KEY NOT NULL,
+                    language VARCHAR(2),
+                    received_ad INTEGER DEFAULT 0
                 );
                 '''
             )
@@ -32,17 +33,17 @@ class Database:
             )
             self.connection.commit()
 
-    def save_user(self, user_id: int) -> sqlite3.Cursor:
+    def save_user(self, user_id: int, language: str) -> sqlite3.Cursor:
         """
         Creates a new user in the database.
         """
         with self.connection:
             result = self.cursor.execute(
                 '''
-                INSERT INTO users (user_id)
-                VALUES (?);
+                INSERT INTO users (user_id, language)
+                VALUES (?, ?);
                 ''',
-                (user_id,)
+                (user_id, language)
             )
             self.connection.commit()
             return result
@@ -75,7 +76,7 @@ class Database:
             )
             self.connection.commit()
 
-    def check_availability(self, api_hash: str) -> Tuple[int]:
+    def get_account_availability(self, api_hash: str) -> Tuple[int]:
         """
         Checks if account is in spamblock.
         """
@@ -102,5 +103,49 @@ class Database:
                 WHERE api_hash=?;
                 ''',
                 (availability, api_hash,)
+            )
+            self.connection.commit()
+
+    def list_pending_users(self) -> List[int]:
+        """
+        Lists all pending users.
+        """
+        with self.connection:
+            result = self.cursor.execute(
+                '''
+                SELECT user_id
+                FROM users
+                WHERE received_ad = 0;
+                '''
+            ).fetchall()
+            return [user_id[0] for user_id in result]
+
+    def get_user_language(self, user_id: int) -> Tuple[str]:
+        """
+        Shows the user's language.
+        """
+        with self.connection:
+            result = self.cursor.execute(
+                '''
+                SELECT language
+                FROM users
+                WHERE user_id = ?;
+                ''',
+                (user_id,)
+            ).fetchone()
+            return result
+
+    def update_received_ad(self, user_id: int) -> None:
+        """
+        Marks the user as the one who received the ad.
+        """
+        with self.connection:
+            self.cursor.execute(
+                '''
+                UPDATE users
+                SET received_ad=1
+                WHERE user_id = ?;
+                ''',
+                (user_id,)
             )
             self.connection.commit()
